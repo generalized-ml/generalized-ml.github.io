@@ -109,3 +109,11 @@ fig.update_layout(
 #save the plot as an html file
 fig.write_html("gradients_3d_plot.html")    
 
+#plot the loss function over epochs
+import matplotlib.pyplot as plt
+plt.plot(epochs, loss)
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.title('Loss over Epochs')
+plt.show()
+# plt.savefig("loss_over_epochs.png")
