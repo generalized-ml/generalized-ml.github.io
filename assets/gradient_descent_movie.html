@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gradient Descent Movie: Loss Surface & Parameter Trajectory</title>
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+<style>
+:root {
+  --bg: #10151e;
+  --panel: #171e29;
+  --border: #2c3544;
+  --accent: #7fe1d6;
+  --accent2: #bcf587;
+  --text: #eef2f8;
+  --muted: #a7b2c4;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+.header {
+  padding: 16px 24px;
+  background: rgba(23, 30, 41, 0.95);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.title-group h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.title-group p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+button:hover {
+  background: #222d3d;
+  border-color: var(--accent);
+}
+button.primary {
+  background: var(--accent);
+  color: #10151e;
+  border-color: transparent;
+}
+button.primary:hover {
+  background: #9cf5ec;
+}
+.speed-select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.scrubber-container {
+  padding: 10px 24px;
+  background: #141a24;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.stage-indicator {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--accent2);
+  min-width: 140px;
+}
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  height: calc(100vh - 130px);
+}
+#plot3d {
+  width: 100%;
+  height: 100%;
+}
+.sidebar {
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+}
+.metric-card {
+  background: #111721;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.metric-card h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+}
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.metric-row:last-child {
+  margin-bottom: 0;
+}
+.metric-value {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--accent);
+}
+.status-pill {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.pill-w { background: rgba(188, 245, 135, 0.15); color: #bcf587; border: 1px solid #bcf587; }
+.pill-g { background: rgba(127, 225, 214, 0.15); color: #7fe1d6; border: 1px solid #7fe1d6; }
+@media (max-width: 900px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  #plot3d {
+    height: 60vh;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title-group">
+    <h1>Gradient Descent Movie</h1>
+    <p>Step 1: Inspect (||W1||, ||W2||, Loss) &nbsp;→&nbsp; Step 2: Gradients (-∇W) as 3D Directional Arrows</p>
+  </div>
+  <div class="controls">
+    <button id="btnPlay" class="primary">▶ Play Movie</button>
+    <button id="btnStep">⏭ Next Step</button>
+    <button id="btnReset">↺ Reset</button>
+    <label style="font-size:12px; color:var(--muted); margin-left:8px;">Speed:
+      <select id="selSpeed" class="speed-select">
+        <option value="1200">0.5x</option>
+        <option value="700" selected>1.0x</option>
+        <option value="350">2.0x</option>
+        <option value="150">4.0x</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<div class="scrubber-container">
+  <input type="range" id="epochSlider" min="0" max="249" value="0">
+  <div class="stage-indicator" id="stageBadge">Epoch 0: Position</div>
+</div>
+
+<div class="main-layout">
+  <div id="plot3d"></div>
+
+  <div class="sidebar">
+    <div class="metric-card">
+      <div id="phasePill" class="status-pill pill-w">Step: Current Weights</div>
+      <p id="phaseDesc" style="font-size:12px; color:var(--muted); margin:0;">Model evaluated at current parameter coordinates.</p>
+    </div>
+
+    <div class="metric-card">
+      <h3>Active Coordinates</h3>
+      <div class="metric-row">
+        <span>Epoch:</span>
+        <span id="valEpoch" class="metric-value">0</span>
+      </div>
+      <div class="metric-row">
+        <span>Loss (MSE):</span>
+        <span id="valLoss" class="metric-value">0.0000</span>
+      </div>
+      <div class="metric-row">
+        <span>Accuracy:</span>
+        <span id="valAcc" class="metric-value">0.0%</span>
+      </div>
+      <div class="metric-row">
+        <span>||W1|| (L2 Norm):</span>
+        <span id="valW1" class="metric-value">0.0000</span>
+      </div>
+      <div class="metric-row">
+        <span>||W2|| (L2 Norm):</span>
+        <span id="valW2" class="metric-value">0.0000</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <h3>Current Gradients</h3>
+      <div class="metric-row">
+        <span>||∇W1||:</span>
+        <span id="valDW1" class="metric-value" style="color:var(--accent2)">0.0000</span>
+      </div>
+      <div class="metric-row">
+        <span>||∇W2||:</span>
+        <span id="valDW2" class="metric-value" style="color:var(--accent2)">0.0000</span>
+      </div>
+      <div class="metric-row">
+        <span>Step Update Δ:</span>
+        <span id="valStep" class="metric-value" style="color:#eef2f8">-η ∇W</span>
+      </div>
+    </div>
+
+    <div class="metric-card" style="font-size:12px; color:var(--muted); line-height:1.5;">
+      <b style="color:var(--text);">How to Read the 3D Movie:</b><br>
+      • <b>X-Axis:</b> ||W1|| (Input to Hidden Layer Norm)<br>
+      • <b>Y-Axis:</b> ||W2|| (Hidden to Output Layer Norm)<br>
+      • <b>Z-Axis:</b> Loss Function surface elevation<br>
+      • <b>Glowing Line:</b> Trajectory path through parameter space<br>
+      • <b>Arrow (──►):</b> Negative gradient vector direction with stick shaft & barb head (-η∇W).
+    </div>
+  </div>
+</div>
+
+<script>
+const data = [{"epoch": 0, "w1": 4.2542, "w2": 1.1361, "loss": 0.3244, "acc": 41.6, "dw1": 0.07189, "dw2": 0.3966}, {"epoch": 1, "w1": 4.2502, "w2": 1.0832, "loss": 0.30165, "acc": 24.0, "dw1": 0.06688, "dw2": 0.30267}, {"epoch": 2, "w1": 4.2476, "w2": 1.049, "loss": 0.28717, "acc": 18.0, "dw1": 0.06343, "dw2": 0.23679}, {"epoch": 3, "w1": 4.246, "w2": 1.0252, "loss": 0.27765, "acc": 21.6, "dw1": 0.06094, "dw2": 0.19364}, {"epoch": 4, "w1": 4.2453, "w2": 1.0075, "loss": 0.27078, "acc": 38.4, "dw1": 0.05901, "dw2": 0.16626}, {"epoch": 5, "w1": 4.2452, "w2": 0.9936, "loss": 0.26528, "acc": 49.6, "dw1": 0.05741, "dw2": 0.14892}, {"epoch": 6, "w1": 4.2456, "w2": 0.9826, "loss": 0.26049, "acc": 50.0, "dw1": 0.05604, "dw2": 0.1377}, {"epoch": 7, "w1": 4.2464, "w2": 0.9739, "loss": 0.25612, "acc": 50.0, "dw1": 0.05483, "dw2": 0.13012}, {"epoch": 8, "w1": 4.2477, "w2": 0.9674, "loss": 0.252, "acc": 50.0, "dw1": 0.05374, "dw2": 0.12473}, {"epoch": 9, "w1": 4.2493, "w2": 0.9629, "loss": 0.24807, "acc": 50.0, "dw1": 0.05276, "dw2": 0.12067}, {"epoch": 10, "w1": 4.2513, "w2": 0.9605, "loss": 0.24429, "acc": 50.0, "dw1": 0.05186, "dw2": 0.11746}, {"epoch": 11, "w1": 4.2535, "w2": 0.96, "loss": 0.24063, "acc": 50.0, "dw1": 0.05104, "dw2": 0.1148}, {"epoch": 12, "w1": 4.256, "w2": 0.9613, "loss": 0.23708, "acc": 50.8, "dw1": 0.05029, "dw2": 0.11251}, {"epoch": 13, "w1": 4.2588, "w2": 0.9645, "loss": 0.23363, "acc": 51.6, "dw1": 0.04961, "dw2": 0.11047}, {"epoch": 14, "w1": 4.2619, "w2": 0.9693, "loss": 0.23029, "acc": 55.6, "dw1": 0.04898, "dw2": 0.10861}, {"epoch": 15, "w1": 4.2652, "w2": 0.9758, "loss": 0.22704, "acc": 58.0, "dw1": 0.04841, "dw2": 0.10689}, {"epoch": 16, "w1": 4.2687, "w2": 0.9839, "loss": 0.22389, "acc": 61.2, "dw1": 0.04788, "dw2": 0.10527}, {"epoch": 17, "w1": 4.2724, "w2": 0.9933, "loss": 0.22083, "acc": 64.8, "dw1": 0.0474, "dw2": 0.10374}, {"epoch": 18, "w1": 4.2764, "w2": 1.0041, "loss": 0.21785, "acc": 67.2, "dw1": 0.04696, "dw2": 0.10227}, {"epoch": 19, "w1": 4.2805, "w2": 1.0161, "loss": 0.21495, "acc": 69.6, "dw1": 0.04654, "dw2": 0.10085}, {"epoch": 20, "w1": 4.2848, "w2": 1.0293, "loss": 0.21214, "acc": 71.6, "dw1": 0.04616, "dw2": 0.09948}, {"epoch": 21, "w1": 4.2892, "w2": 1.0435, "loss": 0.2094, "acc": 74.0, "dw1": 0.04581, "dw2": 0.09816}, {"epoch": 22, "w1": 4.2938, "w2": 1.0586, "loss": 0.20674, "acc": 76.4, "dw1": 0.04548, "dw2": 0.09687}, {"epoch": 23, "w1": 4.2986, "w2": 1.0746, "loss": 0.20416, "acc": 76.0, "dw1": 0.04517, "dw2": 0.09561}, {"epoch": 24, "w1": 4.3035, "w2": 1.0913, "loss": 0.20165, "acc": 77.6, "dw1": 0.04488, "dw2": 0.09439}, {"epoch": 25, "w1": 4.3085, "w2": 1.1088, "loss": 0.1992, "acc": 78.8, "dw1": 0.0446, "dw2": 0.09319}, {"epoch": 26, "w1": 4.3137, "w2": 1.1268, "loss": 0.19683, "acc": 80.0, "dw1": 0.04434, "dw2": 0.09201}, {"epoch": 27, "w1": 4.3189, "w2": 1.1454, "loss": 0.19452, "acc": 79.6, "dw1": 0.04409, "dw2": 0.09087}, {"epoch": 28, "w1": 4.3243, "w2": 1.1645, "loss": 0.19228, "acc": 79.2, "dw1": 0.04385, "dw2": 0.08974}, {"epoch": 29, "w1": 4.3298, "w2": 1.184, "loss": 0.19009, "acc": 78.8, "dw1": 0.04362, "dw2": 0.08864}, {"epoch": 30, "w1": 4.3353, "w2": 1.2039, "loss": 0.18797, "acc": 78.8, "dw1": 0.0434, "dw2": 0.08755}, {"epoch": 31, "w1": 4.3409, "w2": 1.2241, "loss": 0.18591, "acc": 78.4, "dw1": 0.04318, "dw2": 0.08649}, {"epoch": 32, "w1": 4.3467, "w2": 1.2446, "loss": 0.18391, "acc": 78.4, "dw1": 0.04297, "dw2": 0.08544}, {"epoch": 33, "w1": 4.3524, "w2": 1.2653, "loss": 0.18196, "acc": 78.4, "dw1": 0.04276, "dw2": 0.08441}, {"epoch": 34, "w1": 4.3583, "w2": 1.2862, "loss": 0.18007, "acc": 78.0, "dw1": 0.04256, "dw2": 0.0834}, {"epoch": 35, "w1": 4.3642, "w2": 1.3073, "loss": 0.17824, "acc": 78.0, "dw1": 0.04235, "dw2": 0.08241}, {"epoch": 36, "w1": 4.3702, "w2": 1.3285, "loss": 0.17645, "acc": 77.6, "dw1": 0.04215, "dw2": 0.08143}, {"epoch": 37, "w1": 4.3762, "w2": 1.3498, "loss": 0.17472, "acc": 77.2, "dw1": 0.04195, "dw2": 0.08046}, {"epoch": 38, "w1": 4.3822, "w2": 1.3711, "loss": 0.17303, "acc": 77.6, "dw1": 0.04175, "dw2": 0.07951}, {"epoch": 39, "w1": 4.3883, "w2": 1.3926, "loss": 0.17139, "acc": 77.2, "dw1": 0.04155, "dw2": 0.07857}, {"epoch": 40, "w1": 4.3944, "w2": 1.414, "loss": 0.1698, "acc": 77.6, "dw1": 0.04134, "dw2": 0.07765}, {"epoch": 41, "w1": 4.4006, "w2": 1.4354, "loss": 0.16826, "acc": 78.0, "dw1": 0.04114, "dw2": 0.07674}, {"epoch": 42, "w1": 4.4067, "w2": 1.4568, "loss": 0.16676, "acc": 78.4, "dw1": 0.04094, "dw2": 0.07584}, {"epoch": 43, "w1": 4.4129, "w2": 1.4782, "loss": 0.1653, "acc": 78.4, "dw1": 0.04074, "dw2": 0.07496}, {"epoch": 44, "w1": 4.4191, "w2": 1.4996, "loss": 0.16389, "acc": 78.0, "dw1": 0.04053, "dw2": 0.07408}, {"epoch": 45, "w1": 4.4253, "w2": 1.5209, "loss": 0.16251, "acc": 78.0, "dw1": 0.04033, "dw2": 0.07322}, {"epoch": 46, "w1": 4.4316, "w2": 1.5421, "loss": 0.16118, "acc": 78.0, "dw1": 0.04012, "dw2": 0.07237}, {"epoch": 47, "w1": 4.4378, "w2": 1.5632, "loss": 0.15988, "acc": 78.4, "dw1": 0.03991, "dw2": 0.07154}, {"epoch": 48, "w1": 4.444, "w2": 1.5842, "loss": 0.15863, "acc": 78.0, "dw1": 0.0397, "dw2": 0.07071}, {"epoch": 49, "w1": 4.4502, "w2": 1.6052, "loss": 0.1574, "acc": 78.0, "dw1": 0.03949, "dw2": 0.06989}, {"epoch": 50, "w1": 4.4565, "w2": 1.626, "loss": 0.15622, "acc": 78.4, "dw1": 0.03928, "dw2": 0.06909}, {"epoch": 51, "w1": 4.4627, "w2": 1.6467, "loss": 0.15507, "acc": 78.4, "dw1": 0.03907, "dw2": 0.06829}, {"epoch": 52, "w1": 4.4689, "w2": 1.6672, "loss": 0.15395, "acc": 78.4, "dw1": 0.03886, "dw2": 0.06751}, {"epoch": 53, "w1": 4.4751, "w2": 1.6877, "loss": 0.15286, "acc": 78.4, "dw1": 0.03865, "dw2": 0.06674}, {"epoch": 54, "w1": 4.4813, "w2": 1.708, "loss": 0.15181, "acc": 78.8, "dw1": 0.03843, "dw2": 0.06597}, {"epoch": 55, "w1": 4.4874, "w2": 1.7281, "loss": 0.15079, "acc": 78.8, "dw1": 0.03822, "dw2": 0.06522}, {"epoch": 56, "w1": 4.4936, "w2": 1.7482, "loss": 0.14979, "acc": 79.2, "dw1": 0.038, "dw2": 0.06448}, {"epoch": 57, "w1": 4.4997, "w2": 1.768, "loss": 0.14883, "acc": 79.2, "dw1": 0.03778, "dw2": 0.06374}, {"epoch": 58, "w1": 4.5058, "w2": 1.7877, "loss": 0.14789, "acc": 79.2, "dw1": 0.03757, "dw2": 0.06302}, {"epoch": 59, "w1": 4.5119, "w2": 1.8073, "loss": 0.14698, "acc": 79.2, "dw1": 0.03735, "dw2": 0.06231}, {"epoch": 60, "w1": 4.5179, "w2": 1.8267, "loss": 0.1461, "acc": 79.2, "dw1": 0.03714, "dw2": 0.0616}, {"epoch": 61, "w1": 4.5239, "w2": 1.8459, "loss": 0.14524, "acc": 79.6, "dw1": 0.03692, "dw2": 0.06091}, {"epoch": 62, "w1": 4.5299, "w2": 1.865, "loss": 0.14441, "acc": 80.0, "dw1": 0.0367, "dw2": 0.06023}, {"epoch": 63, "w1": 4.5359, "w2": 1.8839, "loss": 0.1436, "acc": 80.0, "dw1": 0.03649, "dw2": 0.05955}, {"epoch": 64, "w1": 4.5418, "w2": 1.9027, "loss": 0.14281, "acc": 80.0, "dw1": 0.03627, "dw2": 0.05888}, {"epoch": 65, "w1": 4.5477, "w2": 1.9212, "loss": 0.14205, "acc": 80.4, "dw1": 0.03606, "dw2": 0.05823}, {"epoch": 66, "w1": 4.5536, "w2": 1.9397, "loss": 0.14131, "acc": 80.4, "dw1": 0.03584, "dw2": 0.05758}, {"epoch": 67, "w1": 4.5594, "w2": 1.9579, "loss": 0.14059, "acc": 80.4, "dw1": 0.03563, "dw2": 0.05694}, {"epoch": 68, "w1": 4.5652, "w2": 1.976, "loss": 0.13989, "acc": 80.4, "dw1": 0.03541, "dw2": 0.05631}, {"epoch": 69, "w1": 4.571, "w2": 1.9939, "loss": 0.1392, "acc": 80.4, "dw1": 0.0352, "dw2": 0.05569}, {"epoch": 70, "w1": 4.5767, "w2": 2.0117, "loss": 0.13854, "acc": 80.4, "dw1": 0.03499, "dw2": 0.05508}, {"epoch": 71, "w1": 4.5824, "w2": 2.0293, "loss": 0.1379, "acc": 80.8, "dw1": 0.03478, "dw2": 0.05447}, {"epoch": 72, "w1": 4.588, "w2": 2.0467, "loss": 0.13727, "acc": 80.8, "dw1": 0.03457, "dw2": 0.05388}, {"epoch": 73, "w1": 4.5936, "w2": 2.0639, "loss": 0.13666, "acc": 80.8, "dw1": 0.03436, "dw2": 0.05329}, {"epoch": 74, "w1": 4.5992, "w2": 2.081, "loss": 0.13607, "acc": 80.8, "dw1": 0.03415, "dw2": 0.05271}, {"epoch": 75, "w1": 4.6047, "w2": 2.098, "loss": 0.1355, "acc": 80.8, "dw1": 0.03395, "dw2": 0.05214}, {"epoch": 76, "w1": 4.6102, "w2": 2.1147, "loss": 0.13493, "acc": 80.8, "dw1": 0.03374, "dw2": 0.05158}, {"epoch": 77, "w1": 4.6157, "w2": 2.1313, "loss": 0.13439, "acc": 80.8, "dw1": 0.03354, "dw2": 0.05103}, {"epoch": 78, "w1": 4.6211, "w2": 2.1478, "loss": 0.13386, "acc": 80.8, "dw1": 0.03333, "dw2": 0.05048}, {"epoch": 79, "w1": 4.6264, "w2": 2.1641, "loss": 0.13334, "acc": 80.8, "dw1": 0.03313, "dw2": 0.04995}, {"epoch": 80, "w1": 4.6318, "w2": 2.1802, "loss": 0.13284, "acc": 80.8, "dw1": 0.03293, "dw2": 0.04942}, {"epoch": 81, "w1": 4.6371, "w2": 2.1962, "loss": 0.13235, "acc": 80.8, "dw1": 0.03274, "dw2": 0.0489}, {"epoch": 82, "w1": 4.6423, "w2": 2.212, "loss": 0.13187, "acc": 80.8, "dw1": 0.03254, "dw2": 0.04838}, {"epoch": 83, "w1": 4.6475, "w2": 2.2277, "loss": 0.13141, "acc": 80.8, "dw1": 0.03234, "dw2": 0.04787}, {"epoch": 84, "w1": 4.6527, "w2": 2.2432, "loss": 0.13095, "acc": 80.8, "dw1": 0.03215, "dw2": 0.04738}, {"epoch": 85, "w1": 4.6578, "w2": 2.2585, "loss": 0.13051, "acc": 80.8, "dw1": 0.03196, "dw2": 0.04688}, {"epoch": 86, "w1": 4.6629, "w2": 2.2737, "loss": 0.13008, "acc": 80.8, "dw1": 0.03177, "dw2": 0.0464}, {"epoch": 87, "w1": 4.6679, "w2": 2.2888, "loss": 0.12966, "acc": 80.8, "dw1": 0.03158, "dw2": 0.04592}, {"epoch": 88, "w1": 4.6729, "w2": 2.3037, "loss": 0.12925, "acc": 80.8, "dw1": 0.03139, "dw2": 0.04545}, {"epoch": 89, "w1": 4.6779, "w2": 2.3185, "loss": 0.12885, "acc": 80.8, "dw1": 0.0312, "dw2": 0.04499}, {"epoch": 90, "w1": 4.6828, "w2": 2.3331, "loss": 0.12846, "acc": 80.8, "dw1": 0.03102, "dw2": 0.04453}, {"epoch": 91, "w1": 4.6877, "w2": 2.3476, "loss": 0.12808, "acc": 81.2, "dw1": 0.03083, "dw2": 0.04408}, {"epoch": 92, "w1": 4.6925, "w2": 2.362, "loss": 0.12771, "acc": 81.2, "dw1": 0.03065, "dw2": 0.04364}, {"epoch": 93, "w1": 4.6973, "w2": 2.3762, "loss": 0.12735, "acc": 81.6, "dw1": 0.03047, "dw2": 0.0432}, {"epoch": 94, "w1": 4.7021, "w2": 2.3902, "loss": 0.127, "acc": 81.6, "dw1": 0.03029, "dw2": 0.04277}, {"epoch": 95, "w1": 4.7068, "w2": 2.4042, "loss": 0.12665, "acc": 81.6, "dw1": 0.03011, "dw2": 0.04235}, {"epoch": 96, "w1": 4.7115, "w2": 2.418, "loss": 0.12631, "acc": 82.0, "dw1": 0.02994, "dw2": 0.04193}, {"epoch": 97, "w1": 4.7161, "w2": 2.4316, "loss": 0.12598, "acc": 82.0, "dw1": 0.02976, "dw2": 0.04152}, {"epoch": 98, "w1": 4.7207, "w2": 2.4452, "loss": 0.12566, "acc": 82.0, "dw1": 0.02959, "dw2": 0.04111}, {"epoch": 99, "w1": 4.7253, "w2": 2.4586, "loss": 0.12535, "acc": 82.0, "dw1": 0.02942, "dw2": 0.04071}, {"epoch": 100, "w1": 4.7298, "w2": 2.4719, "loss": 0.12504, "acc": 82.0, "dw1": 0.02924, "dw2": 0.04032}, {"epoch": 101, "w1": 4.7343, "w2": 2.485, "loss": 0.12474, "acc": 82.0, "dw1": 0.02908, "dw2": 0.03993}, {"epoch": 102, "w1": 4.7387, "w2": 2.4981, "loss": 0.12444, "acc": 82.0, "dw1": 0.02891, "dw2": 0.03954}, {"epoch": 103, "w1": 4.7431, "w2": 2.511, "loss": 0.12415, "acc": 82.0, "dw1": 0.02874, "dw2": 0.03917}, {"epoch": 104, "w1": 4.7475, "w2": 2.5238, "loss": 0.12387, "acc": 82.0, "dw1": 0.02857, "dw2": 0.0388}, {"epoch": 105, "w1": 4.7519, "w2": 2.5364, "loss": 0.1236, "acc": 82.0, "dw1": 0.02841, "dw2": 0.03843}, {"epoch": 106, "w1": 4.7561, "w2": 2.549, "loss": 0.12333, "acc": 82.0, "dw1": 0.02825, "dw2": 0.03807}, {"epoch": 107, "w1": 4.7604, "w2": 2.5614, "loss": 0.12306, "acc": 82.0, "dw1": 0.02808, "dw2": 0.03771}, {"epoch": 108, "w1": 4.7646, "w2": 2.5737, "loss": 0.1228, "acc": 82.0, "dw1": 0.02792, "dw2": 0.03736}, {"epoch": 109, "w1": 4.7688, "w2": 2.5859, "loss": 0.12255, "acc": 82.0, "dw1": 0.02776, "dw2": 0.03702}, {"epoch": 110, "w1": 4.773, "w2": 2.598, "loss": 0.1223, "acc": 82.0, "dw1": 0.0276, "dw2": 0.03667}, {"epoch": 111, "w1": 4.7771, "w2": 2.61, "loss": 0.12206, "acc": 82.0, "dw1": 0.02745, "dw2": 0.03634}, {"epoch": 112, "w1": 4.7812, "w2": 2.6219, "loss": 0.12182, "acc": 82.0, "dw1": 0.02729, "dw2": 0.03601}, {"epoch": 113, "w1": 4.7852, "w2": 2.6337, "loss": 0.12159, "acc": 82.0, "dw1": 0.02713, "dw2": 0.03568}, {"epoch": 114, "w1": 4.7893, "w2": 2.6453, "loss": 0.12136, "acc": 82.0, "dw1": 0.02698, "dw2": 0.03536}, {"epoch": 115, "w1": 4.7932, "w2": 2.6569, "loss": 0.12113, "acc": 82.0, "dw1": 0.02683, "dw2": 0.03504}, {"epoch": 116, "w1": 4.7972, "w2": 2.6683, "loss": 0.12091, "acc": 82.0, "dw1": 0.02667, "dw2": 0.03473}, {"epoch": 117, "w1": 4.8011, "w2": 2.6797, "loss": 0.1207, "acc": 82.0, "dw1": 0.02652, "dw2": 0.03442}, {"epoch": 118, "w1": 4.805, "w2": 2.6909, "loss": 0.12049, "acc": 82.0, "dw1": 0.02637, "dw2": 0.03411}, {"epoch": 119, "w1": 4.8088, "w2": 2.7021, "loss": 0.12028, "acc": 82.0, "dw1": 0.02622, "dw2": 0.03381}, {"epoch": 120, "w1": 4.8127, "w2": 2.7131, "loss": 0.12007, "acc": 82.0, "dw1": 0.02607, "dw2": 0.03352}, {"epoch": 121, "w1": 4.8165, "w2": 2.7241, "loss": 0.11987, "acc": 82.0, "dw1": 0.02592, "dw2": 0.03322}, {"epoch": 122, "w1": 4.8202, "w2": 2.7349, "loss": 0.11968, "acc": 82.0, "dw1": 0.02578, "dw2": 0.03293}, {"epoch": 123, "w1": 4.8239, "w2": 2.7457, "loss": 0.11948, "acc": 82.0, "dw1": 0.02563, "dw2": 0.03265}, {"epoch": 124, "w1": 4.8276, "w2": 2.7564, "loss": 0.11929, "acc": 82.0, "dw1": 0.02548, "dw2": 0.03237}, {"epoch": 125, "w1": 4.8313, "w2": 2.767, "loss": 0.11911, "acc": 82.0, "dw1": 0.02534, "dw2": 0.03209}, {"epoch": 126, "w1": 4.8349, "w2": 2.7774, "loss": 0.11893, "acc": 82.0, "dw1": 0.02519, "dw2": 0.03182}, {"epoch": 127, "w1": 4.8385, "w2": 2.7878, "loss": 0.11875, "acc": 82.0, "dw1": 0.02505, "dw2": 0.03155}, {"epoch": 128, "w1": 4.8421, "w2": 2.7982, "loss": 0.11857, "acc": 82.0, "dw1": 0.02491, "dw2": 0.03128}, {"epoch": 129, "w1": 4.8457, "w2": 2.8084, "loss": 0.1184, "acc": 82.0, "dw1": 0.02477, "dw2": 0.03102}, {"epoch": 130, "w1": 4.8492, "w2": 2.8185, "loss": 0.11823, "acc": 82.0, "dw1": 0.02462, "dw2": 0.03075}, {"epoch": 131, "w1": 4.8527, "w2": 2.8286, "loss": 0.11806, "acc": 82.0, "dw1": 0.02448, "dw2": 0.0305}, {"epoch": 132, "w1": 4.8561, "w2": 2.8385, "loss": 0.1179, "acc": 82.4, "dw1": 0.02434, "dw2": 0.03024}, {"epoch": 133, "w1": 4.8596, "w2": 2.8484, "loss": 0.11774, "acc": 82.4, "dw1": 0.0242, "dw2": 0.02999}, {"epoch": 134, "w1": 4.863, "w2": 2.8582, "loss": 0.11758, "acc": 82.4, "dw1": 0.02407, "dw2": 0.02975}, {"epoch": 135, "w1": 4.8664, "w2": 2.868, "loss": 0.11742, "acc": 82.4, "dw1": 0.02393, "dw2": 0.0295}, {"epoch": 136, "w1": 4.8697, "w2": 2.8776, "loss": 0.11727, "acc": 82.4, "dw1": 0.02379, "dw2": 0.02926}, {"epoch": 137, "w1": 4.873, "w2": 2.8872, "loss": 0.11712, "acc": 82.4, "dw1": 0.02365, "dw2": 0.02902}, {"epoch": 138, "w1": 4.8763, "w2": 2.8967, "loss": 0.11697, "acc": 82.4, "dw1": 0.02352, "dw2": 0.02879}, {"epoch": 139, "w1": 4.8796, "w2": 2.9061, "loss": 0.11682, "acc": 82.4, "dw1": 0.02338, "dw2": 0.02856}, {"epoch": 140, "w1": 4.8828, "w2": 2.9154, "loss": 0.11668, "acc": 82.4, "dw1": 0.02324, "dw2": 0.02833}, {"epoch": 141, "w1": 4.8861, "w2": 2.9247, "loss": 0.11654, "acc": 82.4, "dw1": 0.02311, "dw2": 0.0281}, {"epoch": 142, "w1": 4.8893, "w2": 2.9339, "loss": 0.1164, "acc": 82.8, "dw1": 0.02297, "dw2": 0.02787}, {"epoch": 143, "w1": 4.8924, "w2": 2.943, "loss": 0.11626, "acc": 82.8, "dw1": 0.02284, "dw2": 0.02765}, {"epoch": 144, "w1": 4.8956, "w2": 2.952, "loss": 0.11613, "acc": 82.8, "dw1": 0.02271, "dw2": 0.02743}, {"epoch": 145, "w1": 4.8987, "w2": 2.961, "loss": 0.116, "acc": 82.8, "dw1": 0.02257, "dw2": 0.02722}, {"epoch": 146, "w1": 4.9018, "w2": 2.9699, "loss": 0.11587, "acc": 82.8, "dw1": 0.02244, "dw2": 0.027}, {"epoch": 147, "w1": 4.9049, "w2": 2.9787, "loss": 0.11574, "acc": 82.8, "dw1": 0.02231, "dw2": 0.02679}, {"epoch": 148, "w1": 4.9079, "w2": 2.9875, "loss": 0.11561, "acc": 83.2, "dw1": 0.02218, "dw2": 0.02658}, {"epoch": 149, "w1": 4.911, "w2": 2.9962, "loss": 0.11549, "acc": 83.6, "dw1": 0.02205, "dw2": 0.02637}, {"epoch": 150, "w1": 4.914, "w2": 3.0048, "loss": 0.11537, "acc": 83.6, "dw1": 0.02192, "dw2": 0.02617}, {"epoch": 151, "w1": 4.9169, "w2": 3.0134, "loss": 0.11525, "acc": 83.6, "dw1": 0.02179, "dw2": 0.02597}, {"epoch": 152, "w1": 4.9199, "w2": 3.0219, "loss": 0.11513, "acc": 83.6, "dw1": 0.02166, "dw2": 0.02577}, {"epoch": 153, "w1": 4.9228, "w2": 3.0303, "loss": 0.11501, "acc": 83.6, "dw1": 0.02153, "dw2": 0.02557}, {"epoch": 154, "w1": 4.9257, "w2": 3.0386, "loss": 0.1149, "acc": 83.6, "dw1": 0.0214, "dw2": 0.02537}, {"epoch": 155, "w1": 4.9286, "w2": 3.047, "loss": 0.11479, "acc": 83.6, "dw1": 0.02127, "dw2": 0.02518}, {"epoch": 156, "w1": 4.9315, "w2": 3.0552, "loss": 0.11468, "acc": 83.6, "dw1": 0.02114, "dw2": 0.02499}, {"epoch": 157, "w1": 4.9344, "w2": 3.0634, "loss": 0.11457, "acc": 83.6, "dw1": 0.02102, "dw2": 0.0248}, {"epoch": 158, "w1": 4.9372, "w2": 3.0715, "loss": 0.11446, "acc": 83.6, "dw1": 0.02089, "dw2": 0.02461}, {"epoch": 159, "w1": 4.94, "w2": 3.0795, "loss": 0.11436, "acc": 83.6, "dw1": 0.02076, "dw2": 0.02442}, {"epoch": 160, "w1": 4.9428, "w2": 3.0875, "loss": 0.11425, "acc": 83.6, "dw1": 0.02064, "dw2": 0.02424}, {"epoch": 161, "w1": 4.9455, "w2": 3.0955, "loss": 0.11415, "acc": 84.0, "dw1": 0.02051, "dw2": 0.02406}, {"epoch": 162, "w1": 4.9483, "w2": 3.1033, "loss": 0.11405, "acc": 84.0, "dw1": 0.02039, "dw2": 0.02388}, {"epoch": 163, "w1": 4.951, "w2": 3.1112, "loss": 0.11395, "acc": 84.0, "dw1": 0.02026, "dw2": 0.0237}, {"epoch": 164, "w1": 4.9537, "w2": 3.1189, "loss": 0.11385, "acc": 84.0, "dw1": 0.02014, "dw2": 0.02352}, {"epoch": 165, "w1": 4.9564, "w2": 3.1266, "loss": 0.11376, "acc": 84.0, "dw1": 0.02001, "dw2": 0.02335}, {"epoch": 166, "w1": 4.959, "w2": 3.1343, "loss": 0.11366, "acc": 84.0, "dw1": 0.01989, "dw2": 0.02318}, {"epoch": 167, "w1": 4.9617, "w2": 3.1419, "loss": 0.11357, "acc": 84.0, "dw1": 0.01977, "dw2": 0.023}, {"epoch": 168, "w1": 4.9643, "w2": 3.1494, "loss": 0.11348, "acc": 84.4, "dw1": 0.01964, "dw2": 0.02283}, {"epoch": 169, "w1": 4.9669, "w2": 3.1569, "loss": 0.11339, "acc": 84.4, "dw1": 0.01952, "dw2": 0.02267}, {"epoch": 170, "w1": 4.9695, "w2": 3.1643, "loss": 0.1133, "acc": 84.4, "dw1": 0.0194, "dw2": 0.0225}, {"epoch": 171, "w1": 4.9721, "w2": 3.1717, "loss": 0.11321, "acc": 84.4, "dw1": 0.01928, "dw2": 0.02234}, {"epoch": 172, "w1": 4.9746, "w2": 3.179, "loss": 0.11312, "acc": 84.4, "dw1": 0.01916, "dw2": 0.02217}, {"epoch": 173, "w1": 4.9771, "w2": 3.1863, "loss": 0.11304, "acc": 84.4, "dw1": 0.01904, "dw2": 0.02201}, {"epoch": 174, "w1": 4.9796, "w2": 3.1935, "loss": 0.11296, "acc": 84.4, "dw1": 0.01892, "dw2": 0.02185}, {"epoch": 175, "w1": 4.9821, "w2": 3.2007, "loss": 0.11287, "acc": 84.4, "dw1": 0.0188, "dw2": 0.02169}, {"epoch": 176, "w1": 4.9846, "w2": 3.2078, "loss": 0.11279, "acc": 84.4, "dw1": 0.01868, "dw2": 0.02154}, {"epoch": 177, "w1": 4.9871, "w2": 3.2149, "loss": 0.11271, "acc": 84.4, "dw1": 0.01856, "dw2": 0.02138}, {"epoch": 178, "w1": 4.9895, "w2": 3.2219, "loss": 0.11263, "acc": 84.4, "dw1": 0.01844, "dw2": 0.02123}, {"epoch": 179, "w1": 4.9919, "w2": 3.2288, "loss": 0.11256, "acc": 84.4, "dw1": 0.01833, "dw2": 0.02107}, {"epoch": 180, "w1": 4.9943, "w2": 3.2358, "loss": 0.11248, "acc": 84.4, "dw1": 0.01821, "dw2": 0.02092}, {"epoch": 181, "w1": 4.9967, "w2": 3.2426, "loss": 0.11241, "acc": 84.4, "dw1": 0.01809, "dw2": 0.02077}, {"epoch": 182, "w1": 4.9991, "w2": 3.2495, "loss": 0.11233, "acc": 84.4, "dw1": 0.01798, "dw2": 0.02062}, {"epoch": 183, "w1": 5.0014, "w2": 3.2562, "loss": 0.11226, "acc": 84.4, "dw1": 0.01786, "dw2": 0.02048}, {"epoch": 184, "w1": 5.0038, "w2": 3.263, "loss": 0.11219, "acc": 84.8, "dw1": 0.01775, "dw2": 0.02033}, {"epoch": 185, "w1": 5.0061, "w2": 3.2696, "loss": 0.11212, "acc": 84.8, "dw1": 0.01763, "dw2": 0.02019}, {"epoch": 186, "w1": 5.0084, "w2": 3.2763, "loss": 0.11205, "acc": 84.8, "dw1": 0.01752, "dw2": 0.02004}, {"epoch": 187, "w1": 5.0106, "w2": 3.2829, "loss": 0.11198, "acc": 84.8, "dw1": 0.0174, "dw2": 0.0199}, {"epoch": 188, "w1": 5.0129, "w2": 3.2894, "loss": 0.11191, "acc": 84.8, "dw1": 0.01729, "dw2": 0.01976}, {"epoch": 189, "w1": 5.0152, "w2": 3.2959, "loss": 0.11185, "acc": 84.8, "dw1": 0.01718, "dw2": 0.01962}, {"epoch": 190, "w1": 5.0174, "w2": 3.3024, "loss": 0.11178, "acc": 84.8, "dw1": 0.01706, "dw2": 0.01948}, {"epoch": 191, "w1": 5.0196, "w2": 3.3088, "loss": 0.11172, "acc": 84.8, "dw1": 0.01695, "dw2": 0.01935}, {"epoch": 192, "w1": 5.0218, "w2": 3.3152, "loss": 0.11166, "acc": 84.8, "dw1": 0.01684, "dw2": 0.01921}, {"epoch": 193, "w1": 5.024, "w2": 3.3215, "loss": 0.11159, "acc": 84.8, "dw1": 0.01673, "dw2": 0.01908}, {"epoch": 194, "w1": 5.0262, "w2": 3.3278, "loss": 0.11153, "acc": 84.8, "dw1": 0.01662, "dw2": 0.01894}, {"epoch": 195, "w1": 5.0283, "w2": 3.334, "loss": 0.11147, "acc": 84.8, "dw1": 0.01651, "dw2": 0.01881}, {"epoch": 196, "w1": 5.0304, "w2": 3.3402, "loss": 0.11141, "acc": 84.8, "dw1": 0.0164, "dw2": 0.01868}, {"epoch": 197, "w1": 5.0326, "w2": 3.3463, "loss": 0.11136, "acc": 84.8, "dw1": 0.01629, "dw2": 0.01855}, {"epoch": 198, "w1": 5.0347, "w2": 3.3525, "loss": 0.1113, "acc": 84.8, "dw1": 0.01619, "dw2": 0.01842}, {"epoch": 199, "w1": 5.0368, "w2": 3.3585, "loss": 0.11124, "acc": 84.8, "dw1": 0.01608, "dw2": 0.01829}, {"epoch": 200, "w1": 5.0388, "w2": 3.3646, "loss": 0.11119, "acc": 84.8, "dw1": 0.01597, "dw2": 0.01816}, {"epoch": 201, "w1": 5.0409, "w2": 3.3705, "loss": 0.11113, "acc": 84.8, "dw1": 0.01586, "dw2": 0.01804}, {"epoch": 202, "w1": 5.0429, "w2": 3.3765, "loss": 0.11108, "acc": 84.8, "dw1": 0.01576, "dw2": 0.01791}, {"epoch": 203, "w1": 5.045, "w2": 3.3824, "loss": 0.11103, "acc": 84.8, "dw1": 0.01565, "dw2": 0.01779}, {"epoch": 204, "w1": 5.047, "w2": 3.3883, "loss": 0.11097, "acc": 84.8, "dw1": 0.01555, "dw2": 0.01767}, {"epoch": 205, "w1": 5.049, "w2": 3.3941, "loss": 0.11092, "acc": 84.8, "dw1": 0.01544, "dw2": 0.01754}, {"epoch": 206, "w1": 5.051, "w2": 3.3999, "loss": 0.11087, "acc": 84.8, "dw1": 0.01534, "dw2": 0.01742}, {"epoch": 207, "w1": 5.0529, "w2": 3.4057, "loss": 0.11082, "acc": 84.8, "dw1": 0.01524, "dw2": 0.0173}, {"epoch": 208, "w1": 5.0549, "w2": 3.4114, "loss": 0.11077, "acc": 84.8, "dw1": 0.01513, "dw2": 0.01718}, {"epoch": 209, "w1": 5.0568, "w2": 3.4171, "loss": 0.11073, "acc": 84.8, "dw1": 0.01503, "dw2": 0.01707}, {"epoch": 210, "w1": 5.0588, "w2": 3.4227, "loss": 0.11068, "acc": 84.8, "dw1": 0.01493, "dw2": 0.01695}, {"epoch": 211, "w1": 5.0607, "w2": 3.4283, "loss": 0.11063, "acc": 84.8, "dw1": 0.01483, "dw2": 0.01683}, {"epoch": 212, "w1": 5.0626, "w2": 3.4339, "loss": 0.11059, "acc": 84.8, "dw1": 0.01473, "dw2": 0.01672}, {"epoch": 213, "w1": 5.0645, "w2": 3.4394, "loss": 0.11054, "acc": 84.8, "dw1": 0.01463, "dw2": 0.0166}, {"epoch": 214, "w1": 5.0663, "w2": 3.4449, "loss": 0.1105, "acc": 84.8, "dw1": 0.01453, "dw2": 0.01649}, {"epoch": 215, "w1": 5.0682, "w2": 3.4504, "loss": 0.11045, "acc": 84.8, "dw1": 0.01443, "dw2": 0.01638}, {"epoch": 216, "w1": 5.07, "w2": 3.4558, "loss": 0.11041, "acc": 84.8, "dw1": 0.01433, "dw2": 0.01627}, {"epoch": 217, "w1": 5.0719, "w2": 3.4612, "loss": 0.11037, "acc": 84.8, "dw1": 0.01424, "dw2": 0.01615}, {"epoch": 218, "w1": 5.0737, "w2": 3.4665, "loss": 0.11033, "acc": 84.8, "dw1": 0.01414, "dw2": 0.01604}, {"epoch": 219, "w1": 5.0755, "w2": 3.4718, "loss": 0.11029, "acc": 84.8, "dw1": 0.01404, "dw2": 0.01594}, {"epoch": 220, "w1": 5.0773, "w2": 3.4771, "loss": 0.11025, "acc": 84.8, "dw1": 0.01395, "dw2": 0.01583}, {"epoch": 221, "w1": 5.079, "w2": 3.4824, "loss": 0.11021, "acc": 84.8, "dw1": 0.01385, "dw2": 0.01572}, {"epoch": 222, "w1": 5.0808, "w2": 3.4876, "loss": 0.11017, "acc": 84.8, "dw1": 0.01376, "dw2": 0.01561}, {"epoch": 223, "w1": 5.0826, "w2": 3.4927, "loss": 0.11013, "acc": 84.4, "dw1": 0.01366, "dw2": 0.01551}, {"epoch": 224, "w1": 5.0843, "w2": 3.4979, "loss": 0.11009, "acc": 84.4, "dw1": 0.01357, "dw2": 0.0154}, {"epoch": 225, "w1": 5.086, "w2": 3.503, "loss": 0.11006, "acc": 84.4, "dw1": 0.01348, "dw2": 0.0153}, {"epoch": 226, "w1": 5.0877, "w2": 3.5081, "loss": 0.11002, "acc": 84.4, "dw1": 0.01339, "dw2": 0.0152}, {"epoch": 227, "w1": 5.0894, "w2": 3.5131, "loss": 0.10999, "acc": 84.4, "dw1": 0.01329, "dw2": 0.01509}, {"epoch": 228, "w1": 5.0911, "w2": 3.5181, "loss": 0.10995, "acc": 84.4, "dw1": 0.0132, "dw2": 0.01499}, {"epoch": 229, "w1": 5.0928, "w2": 3.5231, "loss": 0.10992, "acc": 84.4, "dw1": 0.01311, "dw2": 0.01489}, {"epoch": 230, "w1": 5.0944, "w2": 3.5281, "loss": 0.10988, "acc": 84.4, "dw1": 0.01302, "dw2": 0.01479}, {"epoch": 231, "w1": 5.0961, "w2": 3.533, "loss": 0.10985, "acc": 84.4, "dw1": 0.01293, "dw2": 0.01469}, {"epoch": 232, "w1": 5.0977, "w2": 3.5379, "loss": 0.10982, "acc": 84.4, "dw1": 0.01284, "dw2": 0.01459}, {"epoch": 233, "w1": 5.0993, "w2": 3.5427, "loss": 0.10978, "acc": 84.4, "dw1": 0.01276, "dw2": 0.01449}, {"epoch": 234, "w1": 5.1009, "w2": 3.5475, "loss": 0.10975, "acc": 84.4, "dw1": 0.01267, "dw2": 0.0144}, {"epoch": 235, "w1": 5.1025, "w2": 3.5523, "loss": 0.10972, "acc": 84.4, "dw1": 0.01258, "dw2": 0.0143}, {"epoch": 236, "w1": 5.1041, "w2": 3.5571, "loss": 0.10969, "acc": 84.4, "dw1": 0.0125, "dw2": 0.01421}, {"epoch": 237, "w1": 5.1057, "w2": 3.5618, "loss": 0.10966, "acc": 84.4, "dw1": 0.01241, "dw2": 0.01411}, {"epoch": 238, "w1": 5.1072, "w2": 3.5665, "loss": 0.10963, "acc": 84.4, "dw1": 0.01233, "dw2": 0.01402}, {"epoch": 239, "w1": 5.1088, "w2": 3.5712, "loss": 0.1096, "acc": 84.4, "dw1": 0.01224, "dw2": 0.01392}, {"epoch": 240, "w1": 5.1103, "w2": 3.5758, "loss": 0.10957, "acc": 84.4, "dw1": 0.01216, "dw2": 0.01383}, {"epoch": 241, "w1": 5.1118, "w2": 3.5804, "loss": 0.10954, "acc": 84.4, "dw1": 0.01207, "dw2": 0.01374}, {"epoch": 242, "w1": 5.1134, "w2": 3.585, "loss": 0.10952, "acc": 84.4, "dw1": 0.01199, "dw2": 0.01365}, {"epoch": 243, "w1": 5.1148, "w2": 3.5896, "loss": 0.10949, "acc": 84.4, "dw1": 0.01191, "dw2": 0.01356}, {"epoch": 244, "w1": 5.1163, "w2": 3.5941, "loss": 0.10946, "acc": 84.4, "dw1": 0.01183, "dw2": 0.01347}, {"epoch": 245, "w1": 5.1178, "w2": 3.5986, "loss": 0.10944, "acc": 84.4, "dw1": 0.01175, "dw2": 0.01338}, {"epoch": 246, "w1": 5.1193, "w2": 3.603, "loss": 0.10941, "acc": 84.4, "dw1": 0.01167, "dw2": 0.01329}, {"epoch": 247, "w1": 5.1207, "w2": 3.6075, "loss": 0.10939, "acc": 84.4, "dw1": 0.01159, "dw2": 0.0132}, {"epoch": 248, "w1": 5.1222, "w2": 3.6119, "loss": 0.10936, "acc": 84.4, "dw1": 0.01151, "dw2": 0.01311}, {"epoch": 249, "w1": 5.1236, "w2": 3.6162, "loss": 0.10934, "acc": 84.4, "dw1": 0.01143, "dw2": 0.01303}];
+
+let currentEpoch = 0;
+let showGradient = false;
+let isPlaying = false;
+let playTimer = null;
+
+// Prepare data arrays
+const w1_vals = data.map(d => d.w1);
+const w2_vals = data.map(d => d.w2);
+const loss_vals = data.map(d => d.loss);
+
+// Coordinate bounds
+const minW1 = Math.min(...w1_vals) - 0.2, maxW1 = Math.max(...w1_vals) + 0.2;
+const minW2 = Math.min(...w2_vals) - 0.2, maxW2 = Math.max(...w2_vals) + 0.2;
+const minLoss = Math.min(...loss_vals) - 0.05, maxLoss = Math.max(...loss_vals) + 0.05;
+
+// Generate reference background loss surface
+const surfaceX = [], surfaceY = [], surfaceZ = [];
+const gridSteps = 25;
+for (let i = 0; i <= gridSteps; i++) {
+  const x = minW1 + (maxW1 - minW1) * (i / gridSteps);
+  surfaceX.push(x);
+}
+for (let j = 0; j <= gridSteps; j++) {
+  const y = minW2 + (maxW2 - minW2) * (j / gridSteps);
+  surfaceY.push(y);
+}
+for (let j = 0; j <= gridSteps; j++) {
+  const row = [];
+  const y = surfaceY[j];
+  for (let i = 0; i <= gridSteps; i++) {
+    const x = surfaceX[i];
+    const dX = (x - maxW1);
+    const dY = (y - maxW2);
+    const z = minLoss + 0.2 * (dX * dX + dY * dY * 0.4);
+    row.push(z);
+  }
+  surfaceZ.push(row);
+}
+
+// Initial Plotly setup
+const surfaceTrace = {
+  type: 'surface',
+  x: surfaceX,
+  y: surfaceY,
+  z: surfaceZ,
+  opacity: 0.15,
+  showscale: false,
+  colorscale: 'Blues',
+  hoverinfo: 'none'
+};
+
+const pathTrace = {
+  type: 'scatter3d',
+  mode: 'lines',
+  x: [w1_vals[0]],
+  y: [w2_vals[0]],
+  z: [loss_vals[0]],
+  line: {
+    color: '#7fe1d6',
+    width: 5
+  },
+  name: 'Optimization Path',
+  hoverinfo: 'none'
+};
+
+const pointTrace = {
+  type: 'scatter3d',
+  mode: 'markers',
+  x: [w1_vals[0]],
+  y: [w2_vals[0]],
+  z: [loss_vals[0]],
+  marker: {
+    size: 8,
+    color: '#bcf587',
+    symbol: 'circle',
+    line: { color: '#ffffff', width: 2 }
+  },
+  name: 'Current (W1, W2, Loss)'
+};
+
+// 3D Arrow (──►) using line segments with arrowhead barbs
+const arrowTrace = {
+  type: 'scatter3d',
+  mode: 'lines',
+  x: [null],
+  y: [null],
+  z: [null],
+  line: {
+    color: '#ff6b6b',
+    width: 6
+  },
+  name: 'Gradient Arrow (──►)',
+  hoverinfo: 'none'
+};
+
+const layout = {
+  paper_bgcolor: '#10151e',
+  plot_bgcolor: '#10151e',
+  margin: { l: 0, r: 0, b: 0, t: 0 },
+  scene: {
+    xaxis: { title: '||W1||', range: [minW1, maxW1], gridcolor: '#1e2633', zerolinecolor: '#2c3544' },
+    yaxis: { title: '||W2||', range: [minW2, maxW2], gridcolor: '#1e2633', zerolinecolor: '#2c3544' },
+    zaxis: { title: 'Loss (MSE)', range: [minLoss, maxLoss], gridcolor: '#1e2633', zerolinecolor: '#2c3544' },
+    camera: {
+      eye: { x: 1.5, y: -1.7, z: 1.2 }
+    }
+  },
+  showlegend: false
+};
+
+Plotly.newPlot('plot3d', [surfaceTrace, pathTrace, pointTrace, arrowTrace], layout, { responsive: true });
+
+function computeArrowCoords(x0, y0, z0, x1, y1, z1) {
+  // Vector dx, dy, dz
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const dz = z1 - z0;
+  const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+  if (len < 1e-6) return { x: [null], y: [null], z: [null] };
+
+  // Normalized direction
+  const ux = dx / len;
+  const uy = dy / len;
+  const uz = dz / len;
+
+  // Find two orthogonal vectors for 3D arrow barbs
+  let px, py, pz;
+  if (Math.abs(ux) < 0.9) {
+    px = 1; py = 0; pz = 0;
+  } else {
+    px = 0; py = 1; pz = 0;
+  }
+  // Cross product u x p
+  let n1x = uy * pz - uz * py;
+  let n1y = uz * px - ux * pz;
+  let n1z = ux * py - uy * px;
+  const n1len = Math.sqrt(n1x*n1x + n1y*n1y + n1z*n1z);
+  n1x /= n1len; n1y /= n1len; n1z /= n1len;
+
+  // Second normal n2 = u x n1
+  const n2x = uy * n1z - uz * n1y;
+  const n2y = uz * n1x - ux * n1z;
+  const n2z = ux * n1y - uy * n1x;
+
+  // Arrowhead size
+  const barbLen = Math.max(0.04, Math.min(0.12, len * 0.45));
+  const barbWidth = barbLen * 0.45;
+
+  // Barb tips (4 barbs around the shaft pointing back like ->)
+  const b1x = x1 - ux * barbLen + n1x * barbWidth;
+  const b1y = y1 - uy * barbLen + n1y * barbWidth;
+  const b1z = z1 - uz * barbLen + n1z * barbWidth;
+
+  const b2x = x1 - ux * barbLen - n1x * barbWidth;
+  const b2y = y1 - uy * barbLen - n1y * barbWidth;
+  const b2z = z1 - uz * barbLen - n1z * barbWidth;
+
+  const b3x = x1 - ux * barbLen + n2x * barbWidth;
+  const b3y = y1 - uy * barbLen + n2y * barbWidth;
+  const b3z = z1 - uz * barbLen + n2z * barbWidth;
+
+  const b4x = x1 - ux * barbLen - n2x * barbWidth;
+  const b4y = y1 - uy * barbLen - n2y * barbWidth;
+  const b4z = z1 - uz * barbLen - n2z * barbWidth;
+
+  // Combined continuous line segments separated by null
+  return {
+    x: [x0, x1, b1x, null, x1, b2x, null, x1, b3x, null, x1, b4x],
+    y: [y0, y1, b1y, null, y1, b2y, null, y1, b3y, null, y1, b4y],
+    z: [z0, z1, b1z, null, z1, b2z, null, z1, b3z, null, z1, b4z]
+  };
+}
+
+function updateUI() {
+  const d = data[currentEpoch];
+  
+  // Update sidebar metrics
+  document.getElementById('valEpoch').textContent = d.epoch;
+  document.getElementById('valLoss').textContent = d.loss.toFixed(4);
+  document.getElementById('valAcc').textContent = d.acc.toFixed(1) + '%';
+  document.getElementById('valW1').textContent = d.w1.toFixed(4);
+  document.getElementById('valW2').textContent = d.w2.toFixed(4);
+  document.getElementById('valDW1').textContent = d.dw1.toFixed(4);
+  document.getElementById('valDW2').textContent = d.dw2.toFixed(4);
+  document.getElementById('epochSlider').value = currentEpoch;
+
+  const phasePill = document.getElementById('phasePill');
+  const phaseDesc = document.getElementById('phaseDesc');
+  const stageBadge = document.getElementById('stageBadge');
+
+  if (!showGradient) {
+    phasePill.className = 'status-pill pill-w';
+    phasePill.textContent = 'Step A: Parameters & Loss';
+    phaseDesc.textContent = `At epoch ${d.epoch}, W1=${d.w1}, W2=${d.w2}, yielding Loss=${d.loss}.`;
+    stageBadge.textContent = `Epoch ${d.epoch}: W & Loss`;
+  } else {
+    phasePill.className = 'status-pill pill-g';
+    phasePill.textContent = 'Step B: Computing Gradient';
+    phaseDesc.textContent = `Gradient arrow (──►) points along descent direction (-∇W). Next step updates parameters.`;
+    stageBadge.textContent = `Epoch ${d.epoch}: ∇ Arrow (──►)`;
+  }
+
+  // Update 3D Traces
+  const pathX = w1_vals.slice(0, currentEpoch + 1);
+  const pathY = w2_vals.slice(0, currentEpoch + 1);
+  const pathZ = loss_vals.slice(0, currentEpoch + 1);
+
+  let arrow = { x: [null], y: [null], z: [null] };
+  if (showGradient && currentEpoch < data.length - 1) {
+    const next = data[currentEpoch + 1];
+    arrow = computeArrowCoords(d.w1, d.w2, d.loss, next.w1, next.w2, next.loss);
+  }
+
+  Plotly.restyle('plot3d', {
+    x: [pathX],
+    y: [pathY],
+    z: [pathZ]
+  }, [1]);
+
+  Plotly.restyle('plot3d', {
+    x: [[d.w1]],
+    y: [[d.w2]],
+    z: [[d.loss]]
+  }, [2]);
+
+  Plotly.restyle('plot3d', {
+    x: [arrow.x],
+    y: [arrow.y],
+    z: [arrow.z]
+  }, [3]);
+}
+
+function advanceMovieStep() {
+  if (!showGradient) {
+    showGradient = true;
+  } else {
+    if (currentEpoch < data.length - 1) {
+      currentEpoch++;
+      showGradient = false;
+    } else {
+      pauseMovie();
+      return;
+    }
+  }
+  updateUI();
+}
+
+function playMovie() {
+  isPlaying = true;
+  document.getElementById('btnPlay').textContent = '⏸ Pause';
+  const speed = parseInt(document.getElementById('selSpeed').value, 10);
+  playTimer = setInterval(advanceMovieStep, speed);
+}
+
+function pauseMovie() {
+  isPlaying = false;
+  document.getElementById('btnPlay').textContent = '▶ Play Movie';
+  clearInterval(playTimer);
+  playTimer = null;
+}
+
+document.getElementById('btnPlay').addEventListener('click', () => {
+  if (isPlaying) {
+    pauseMovie();
+  } else {
+    if (currentEpoch >= data.length - 1) {
+      currentEpoch = 0;
+      showGradient = false;
+    }
+    playMovie();
+  }
+});
+
+document.getElementById('btnStep').addEventListener('click', () => {
+  pauseMovie();
+  advanceMovieStep();
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  pauseMovie();
+  currentEpoch = 0;
+  showGradient = false;
+  updateUI();
+});
+
+document.getElementById('selSpeed').addEventListener('change', () => {
+  if (isPlaying) {
+    pauseMovie();
+    playMovie();
+  }
+});
+
+document.getElementById('epochSlider').addEventListener('input', (e) => {
+  pauseMovie();
+  currentEpoch = parseInt(e.target.value, 10);
+  showGradient = false;
+  updateUI();
+});
+
+// Initial draw
+updateUI();
+</script>
+</body>
+</html>

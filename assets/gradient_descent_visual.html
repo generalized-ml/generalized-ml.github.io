@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D Gradient Descent Scroll Visual</title>
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #111721;
+  color: #eef2f8;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow: hidden;
+}
+#plot {
+  width: 100%;
+  height: 100%;
+}
+.hud {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  background: rgba(16, 21, 30, 0.85);
+  border: 1px solid #2c3544;
+  backdrop-filter: blur(8px);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.hud span {
+  color: #a7b2c4;
+}
+.hud b {
+  color: #7fe1d6;
+  font-family: monospace;
+}
+.badge-state {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.badge-w { background: rgba(188, 245, 135, 0.15); color: #bcf587; border: 1px solid #bcf587; }
+.badge-g { background: rgba(255, 51, 102, 0.15); color: #ff3366; border: 1px solid #ff3366; }
+</style>
+</head>
+<body>
+<div class="hud">
+  <span id="badgeState" class="badge-state badge-w">Current State</span>
+  <div><span>Epoch: </span><b id="hudEpoch">0</b></div>
+  <div><span>Loss: </span><b id="hudLoss">0.000</b></div>
+  <div><span>||W1||: </span><b id="hudW1">0.00</b></div>
+  <div><span>||W2||: </span><b id="hudW2">0.00</b></div>
+  <div><span>Gradient (──►): </span><b id="hudGrad" style="color:#ff3366">0.000</b></div>
+</div>
+<div id="plot"></div>
+
+<script>
+const data = [{"epoch": 0, "w1": 4.2542, "w2": 1.1361, "loss": 0.3244, "acc": 41.6, "dw1": 0.07189, "dw2": 0.3966}, {"epoch": 1, "w1": 4.2502, "w2": 1.0832, "loss": 0.30165, "acc": 24.0, "dw1": 0.06688, "dw2": 0.30267}, {"epoch": 2, "w1": 4.2476, "w2": 1.049, "loss": 0.28717, "acc": 18.0, "dw1": 0.06343, "dw2": 0.23679}, {"epoch": 3, "w1": 4.246, "w2": 1.0252, "loss": 0.27765, "acc": 21.6, "dw1": 0.06094, "dw2": 0.19364}, {"epoch": 4, "w1": 4.2453, "w2": 1.0075, "loss": 0.27078, "acc": 38.4, "dw1": 0.05901, "dw2": 0.16626}, {"epoch": 5, "w1": 4.2452, "w2": 0.9936, "loss": 0.26528, "acc": 49.6, "dw1": 0.05741, "dw2": 0.14892}, {"epoch": 6, "w1": 4.2456, "w2": 0.9826, "loss": 0.26049, "acc": 50.0, "dw1": 0.05604, "dw2": 0.1377}, {"epoch": 7, "w1": 4.2464, "w2": 0.9739, "loss": 0.25612, "acc": 50.0, "dw1": 0.05483, "dw2": 0.13012}, {"epoch": 8, "w1": 4.2477, "w2": 0.9674, "loss": 0.252, "acc": 50.0, "dw1": 0.05374, "dw2": 0.12473}, {"epoch": 9, "w1": 4.2493, "w2": 0.9629, "loss": 0.24807, "acc": 50.0, "dw1": 0.05276, "dw2": 0.12067}, {"epoch": 10, "w1": 4.2513, "w2": 0.9605, "loss": 0.24429, "acc": 50.0, "dw1": 0.05186, "dw2": 0.11746}, {"epoch": 11, "w1": 4.2535, "w2": 0.96, "loss": 0.24063, "acc": 50.0, "dw1": 0.05104, "dw2": 0.1148}, {"epoch": 12, "w1": 4.256, "w2": 0.9613, "loss": 0.23708, "acc": 50.8, "dw1": 0.05029, "dw2": 0.11251}, {"epoch": 13, "w1": 4.2588, "w2": 0.9645, "loss": 0.23363, "acc": 51.6, "dw1": 0.04961, "dw2": 0.11047}, {"epoch": 14, "w1": 4.2619, "w2": 0.9693, "loss": 0.23029, "acc": 55.6, "dw1": 0.04898, "dw2": 0.10861}, {"epoch": 15, "w1": 4.2652, "w2": 0.9758, "loss": 0.22704, "acc": 58.0, "dw1": 0.04841, "dw2": 0.10689}, {"epoch": 16, "w1": 4.2687, "w2": 0.9839, "loss": 0.22389, "acc": 61.2, "dw1": 0.04788, "dw2": 0.10527}, {"epoch": 17, "w1": 4.2724, "w2": 0.9933, "loss": 0.22083, "acc": 64.8, "dw1": 0.0474, "dw2": 0.10374}, {"epoch": 18, "w1": 4.2764, "w2": 1.0041, "loss": 0.21785, "acc": 67.2, "dw1": 0.04696, "dw2": 0.10227}, {"epoch": 19, "w1": 4.2805, "w2": 1.0161, "loss": 0.21495, "acc": 69.6, "dw1": 0.04654, "dw2": 0.10085}, {"epoch": 20, "w1": 4.2848, "w2": 1.0293, "loss": 0.21214, "acc": 71.6, "dw1": 0.04616, "dw2": 0.09948}, {"epoch": 21, "w1": 4.2892, "w2": 1.0435, "loss": 0.2094, "acc": 74.0, "dw1": 0.04581, "dw2": 0.09816}, {"epoch": 22, "w1": 4.2938, "w2": 1.0586, "loss": 0.20674, "acc": 76.4, "dw1": 0.04548, "dw2": 0.09687}, {"epoch": 23, "w1": 4.2986, "w2": 1.0746, "loss": 0.20416, "acc": 76.0, "dw1": 0.04517, "dw2": 0.09561}, {"epoch": 24, "w1": 4.3035, "w2": 1.0913, "loss": 0.20165, "acc": 77.6, "dw1": 0.04488, "dw2": 0.09439}, {"epoch": 25, "w1": 4.3085, "w2": 1.1088, "loss": 0.1992, "acc": 78.8, "dw1": 0.0446, "dw2": 0.09319}, {"epoch": 26, "w1": 4.3137, "w2": 1.1268, "loss": 0.19683, "acc": 80.0, "dw1": 0.04434, "dw2": 0.09201}, {"epoch": 27, "w1": 4.3189, "w2": 1.1454, "loss": 0.19452, "acc": 79.6, "dw1": 0.04409, "dw2": 0.09087}, {"epoch": 28, "w1": 4.3243, "w2": 1.1645, "loss": 0.19228, "acc": 79.2, "dw1": 0.04385, "dw2": 0.08974}, {"epoch": 29, "w1": 4.3298, "w2": 1.184, "loss": 0.19009, "acc": 78.8, "dw1": 0.04362, "dw2": 0.08864}, {"epoch": 30, "w1": 4.3353, "w2": 1.2039, "loss": 0.18797, "acc": 78.8, "dw1": 0.0434, "dw2": 0.08755}, {"epoch": 31, "w1": 4.3409, "w2": 1.2241, "loss": 0.18591, "acc": 78.4, "dw1": 0.04318, "dw2": 0.08649}, {"epoch": 32, "w1": 4.3467, "w2": 1.2446, "loss": 0.18391, "acc": 78.4, "dw1": 0.04297, "dw2": 0.08544}, {"epoch": 33, "w1": 4.3524, "w2": 1.2653, "loss": 0.18196, "acc": 78.4, "dw1": 0.04276, "dw2": 0.08441}, {"epoch": 34, "w1": 4.3583, "w2": 1.2862, "loss": 0.18007, "acc": 78.0, "dw1": 0.04256, "dw2": 0.0834}, {"epoch": 35, "w1": 4.3642, "w2": 1.3073, "loss": 0.17824, "acc": 78.0, "dw1": 0.04235, "dw2": 0.08241}, {"epoch": 36, "w1": 4.3702, "w2": 1.3285, "loss": 0.17645, "acc": 77.6, "dw1": 0.04215, "dw2": 0.08143}, {"epoch": 37, "w1": 4.3762, "w2": 1.3498, "loss": 0.17472, "acc": 77.2, "dw1": 0.04195, "dw2": 0.08046}, {"epoch": 38, "w1": 4.3822, "w2": 1.3711, "loss": 0.17303, "acc": 77.6, "dw1": 0.04175, "dw2": 0.07951}, {"epoch": 39, "w1": 4.3883, "w2": 1.3926, "loss": 0.17139, "acc": 77.2, "dw1": 0.04155, "dw2": 0.07857}, {"epoch": 40, "w1": 4.3944, "w2": 1.414, "loss": 0.1698, "acc": 77.6, "dw1": 0.04134, "dw2": 0.07765}, {"epoch": 41, "w1": 4.4006, "w2": 1.4354, "loss": 0.16826, "acc": 78.0, "dw1": 0.04114, "dw2": 0.07674}, {"epoch": 42, "w1": 4.4067, "w2": 1.4568, "loss": 0.16676, "acc": 78.4, "dw1": 0.04094, "dw2": 0.07584}, {"epoch": 43, "w1": 4.4129, "w2": 1.4782, "loss": 0.1653, "acc": 78.4, "dw1": 0.04074, "dw2": 0.07496}, {"epoch": 44, "w1": 4.4191, "w2": 1.4996, "loss": 0.16389, "acc": 78.0, "dw1": 0.04053, "dw2": 0.07408}, {"epoch": 45, "w1": 4.4253, "w2": 1.5209, "loss": 0.16251, "acc": 78.0, "dw1": 0.04033, "dw2": 0.07322}, {"epoch": 46, "w1": 4.4316, "w2": 1.5421, "loss": 0.16118, "acc": 78.0, "dw1": 0.04012, "dw2": 0.07237}, {"epoch": 47, "w1": 4.4378, "w2": 1.5632, "loss": 0.15988, "acc": 78.4, "dw1": 0.03991, "dw2": 0.07154}, {"epoch": 48, "w1": 4.444, "w2": 1.5842, "loss": 0.15863, "acc": 78.0, "dw1": 0.0397, "dw2": 0.07071}, {"epoch": 49, "w1": 4.4502, "w2": 1.6052, "loss": 0.1574, "acc": 78.0, "dw1": 0.03949, "dw2": 0.06989}, {"epoch": 50, "w1": 4.4565, "w2": 1.626, "loss": 0.15622, "acc": 78.4, "dw1": 0.03928, "dw2": 0.06909}, {"epoch": 51, "w1": 4.4627, "w2": 1.6467, "loss": 0.15507, "acc": 78.4, "dw1": 0.03907, "dw2": 0.06829}, {"epoch": 52, "w1": 4.4689, "w2": 1.6672, "loss": 0.15395, "acc": 78.4, "dw1": 0.03886, "dw2": 0.06751}, {"epoch": 53, "w1": 4.4751, "w2": 1.6877, "loss": 0.15286, "acc": 78.4, "dw1": 0.03865, "dw2": 0.06674}, {"epoch": 54, "w1": 4.4813, "w2": 1.708, "loss": 0.15181, "acc": 78.8, "dw1": 0.03843, "dw2": 0.06597}, {"epoch": 55, "w1": 4.4874, "w2": 1.7281, "loss": 0.15079, "acc": 78.8, "dw1": 0.03822, "dw2": 0.06522}, {"epoch": 56, "w1": 4.4936, "w2": 1.7482, "loss": 0.14979, "acc": 79.2, "dw1": 0.038, "dw2": 0.06448}, {"epoch": 57, "w1": 4.4997, "w2": 1.768, "loss": 0.14883, "acc": 79.2, "dw1": 0.03778, "dw2": 0.06374}, {"epoch": 58, "w1": 4.5058, "w2": 1.7877, "loss": 0.14789, "acc": 79.2, "dw1": 0.03757, "dw2": 0.06302}, {"epoch": 59, "w1": 4.5119, "w2": 1.8073, "loss": 0.14698, "acc": 79.2, "dw1": 0.03735, "dw2": 0.06231}, {"epoch": 60, "w1": 4.5179, "w2": 1.8267, "loss": 0.1461, "acc": 79.2, "dw1": 0.03714, "dw2": 0.0616}, {"epoch": 61, "w1": 4.5239, "w2": 1.8459, "loss": 0.14524, "acc": 79.6, "dw1": 0.03692, "dw2": 0.06091}, {"epoch": 62, "w1": 4.5299, "w2": 1.865, "loss": 0.14441, "acc": 80.0, "dw1": 0.0367, "dw2": 0.06023}, {"epoch": 63, "w1": 4.5359, "w2": 1.8839, "loss": 0.1436, "acc": 80.0, "dw1": 0.03649, "dw2": 0.05955}, {"epoch": 64, "w1": 4.5418, "w2": 1.9027, "loss": 0.14281, "acc": 80.0, "dw1": 0.03627, "dw2": 0.05888}, {"epoch": 65, "w1": 4.5477, "w2": 1.9212, "loss": 0.14205, "acc": 80.4, "dw1": 0.03606, "dw2": 0.05823}, {"epoch": 66, "w1": 4.5536, "w2": 1.9397, "loss": 0.14131, "acc": 80.4, "dw1": 0.03584, "dw2": 0.05758}, {"epoch": 67, "w1": 4.5594, "w2": 1.9579, "loss": 0.14059, "acc": 80.4, "dw1": 0.03563, "dw2": 0.05694}, {"epoch": 68, "w1": 4.5652, "w2": 1.976, "loss": 0.13989, "acc": 80.4, "dw1": 0.03541, "dw2": 0.05631}, {"epoch": 69, "w1": 4.571, "w2": 1.9939, "loss": 0.1392, "acc": 80.4, "dw1": 0.0352, "dw2": 0.05569}, {"epoch": 70, "w1": 4.5767, "w2": 2.0117, "loss": 0.13854, "acc": 80.4, "dw1": 0.03499, "dw2": 0.05508}, {"epoch": 71, "w1": 4.5824, "w2": 2.0293, "loss": 0.1379, "acc": 80.8, "dw1": 0.03478, "dw2": 0.05447}, {"epoch": 72, "w1": 4.588, "w2": 2.0467, "loss": 0.13727, "acc": 80.8, "dw1": 0.03457, "dw2": 0.05388}, {"epoch": 73, "w1": 4.5936, "w2": 2.0639, "loss": 0.13666, "acc": 80.8, "dw1": 0.03436, "dw2": 0.05329}, {"epoch": 74, "w1": 4.5992, "w2": 2.081, "loss": 0.13607, "acc": 80.8, "dw1": 0.03415, "dw2": 0.05271}, {"epoch": 75, "w1": 4.6047, "w2": 2.098, "loss": 0.1355, "acc": 80.8, "dw1": 0.03395, "dw2": 0.05214}, {"epoch": 76, "w1": 4.6102, "w2": 2.1147, "loss": 0.13493, "acc": 80.8, "dw1": 0.03374, "dw2": 0.05158}, {"epoch": 77, "w1": 4.6157, "w2": 2.1313, "loss": 0.13439, "acc": 80.8, "dw1": 0.03354, "dw2": 0.05103}, {"epoch": 78, "w1": 4.6211, "w2": 2.1478, "loss": 0.13386, "acc": 80.8, "dw1": 0.03333, "dw2": 0.05048}, {"epoch": 79, "w1": 4.6264, "w2": 2.1641, "loss": 0.13334, "acc": 80.8, "dw1": 0.03313, "dw2": 0.04995}, {"epoch": 80, "w1": 4.6318, "w2": 2.1802, "loss": 0.13284, "acc": 80.8, "dw1": 0.03293, "dw2": 0.04942}, {"epoch": 81, "w1": 4.6371, "w2": 2.1962, "loss": 0.13235, "acc": 80.8, "dw1": 0.03274, "dw2": 0.0489}, {"epoch": 82, "w1": 4.6423, "w2": 2.212, "loss": 0.13187, "acc": 80.8, "dw1": 0.03254, "dw2": 0.04838}, {"epoch": 83, "w1": 4.6475, "w2": 2.2277, "loss": 0.13141, "acc": 80.8, "dw1": 0.03234, "dw2": 0.04787}, {"epoch": 84, "w1": 4.6527, "w2": 2.2432, "loss": 0.13095, "acc": 80.8, "dw1": 0.03215, "dw2": 0.04738}, {"epoch": 85, "w1": 4.6578, "w2": 2.2585, "loss": 0.13051, "acc": 80.8, "dw1": 0.03196, "dw2": 0.04688}, {"epoch": 86, "w1": 4.6629, "w2": 2.2737, "loss": 0.13008, "acc": 80.8, "dw1": 0.03177, "dw2": 0.0464}, {"epoch": 87, "w1": 4.6679, "w2": 2.2888, "loss": 0.12966, "acc": 80.8, "dw1": 0.03158, "dw2": 0.04592}, {"epoch": 88, "w1": 4.6729, "w2": 2.3037, "loss": 0.12925, "acc": 80.8, "dw1": 0.03139, "dw2": 0.04545}, {"epoch": 89, "w1": 4.6779, "w2": 2.3185, "loss": 0.12885, "acc": 80.8, "dw1": 0.0312, "dw2": 0.04499}, {"epoch": 90, "w1": 4.6828, "w2": 2.3331, "loss": 0.12846, "acc": 80.8, "dw1": 0.03102, "dw2": 0.04453}, {"epoch": 91, "w1": 4.6877, "w2": 2.3476, "loss": 0.12808, "acc": 81.2, "dw1": 0.03083, "dw2": 0.04408}, {"epoch": 92, "w1": 4.6925, "w2": 2.362, "loss": 0.12771, "acc": 81.2, "dw1": 0.03065, "dw2": 0.04364}, {"epoch": 93, "w1": 4.6973, "w2": 2.3762, "loss": 0.12735, "acc": 81.6, "dw1": 0.03047, "dw2": 0.0432}, {"epoch": 94, "w1": 4.7021, "w2": 2.3902, "loss": 0.127, "acc": 81.6, "dw1": 0.03029, "dw2": 0.04277}, {"epoch": 95, "w1": 4.7068, "w2": 2.4042, "loss": 0.12665, "acc": 81.6, "dw1": 0.03011, "dw2": 0.04235}, {"epoch": 96, "w1": 4.7115, "w2": 2.418, "loss": 0.12631, "acc": 82.0, "dw1": 0.02994, "dw2": 0.04193}, {"epoch": 97, "w1": 4.7161, "w2": 2.4316, "loss": 0.12598, "acc": 82.0, "dw1": 0.02976, "dw2": 0.04152}, {"epoch": 98, "w1": 4.7207, "w2": 2.4452, "loss": 0.12566, "acc": 82.0, "dw1": 0.02959, "dw2": 0.04111}, {"epoch": 99, "w1": 4.7253, "w2": 2.4586, "loss": 0.12535, "acc": 82.0, "dw1": 0.02942, "dw2": 0.04071}, {"epoch": 100, "w1": 4.7298, "w2": 2.4719, "loss": 0.12504, "acc": 82.0, "dw1": 0.02924, "dw2": 0.04032}, {"epoch": 101, "w1": 4.7343, "w2": 2.485, "loss": 0.12474, "acc": 82.0, "dw1": 0.02908, "dw2": 0.03993}, {"epoch": 102, "w1": 4.7387, "w2": 2.4981, "loss": 0.12444, "acc": 82.0, "dw1": 0.02891, "dw2": 0.03954}, {"epoch": 103, "w1": 4.7431, "w2": 2.511, "loss": 0.12415, "acc": 82.0, "dw1": 0.02874, "dw2": 0.03917}, {"epoch": 104, "w1": 4.7475, "w2": 2.5238, "loss": 0.12387, "acc": 82.0, "dw1": 0.02857, "dw2": 0.0388}, {"epoch": 105, "w1": 4.7519, "w2": 2.5364, "loss": 0.1236, "acc": 82.0, "dw1": 0.02841, "dw2": 0.03843}, {"epoch": 106, "w1": 4.7561, "w2": 2.549, "loss": 0.12333, "acc": 82.0, "dw1": 0.02825, "dw2": 0.03807}, {"epoch": 107, "w1": 4.7604, "w2": 2.5614, "loss": 0.12306, "acc": 82.0, "dw1": 0.02808, "dw2": 0.03771}, {"epoch": 108, "w1": 4.7646, "w2": 2.5737, "loss": 0.1228, "acc": 82.0, "dw1": 0.02792, "dw2": 0.03736}, {"epoch": 109, "w1": 4.7688, "w2": 2.5859, "loss": 0.12255, "acc": 82.0, "dw1": 0.02776, "dw2": 0.03702}, {"epoch": 110, "w1": 4.773, "w2": 2.598, "loss": 0.1223, "acc": 82.0, "dw1": 0.0276, "dw2": 0.03667}, {"epoch": 111, "w1": 4.7771, "w2": 2.61, "loss": 0.12206, "acc": 82.0, "dw1": 0.02745, "dw2": 0.03634}, {"epoch": 112, "w1": 4.7812, "w2": 2.6219, "loss": 0.12182, "acc": 82.0, "dw1": 0.02729, "dw2": 0.03601}, {"epoch": 113, "w1": 4.7852, "w2": 2.6337, "loss": 0.12159, "acc": 82.0, "dw1": 0.02713, "dw2": 0.03568}, {"epoch": 114, "w1": 4.7893, "w2": 2.6453, "loss": 0.12136, "acc": 82.0, "dw1": 0.02698, "dw2": 0.03536}, {"epoch": 115, "w1": 4.7932, "w2": 2.6569, "loss": 0.12113, "acc": 82.0, "dw1": 0.02683, "dw2": 0.03504}, {"epoch": 116, "w1": 4.7972, "w2": 2.6683, "loss": 0.12091, "acc": 82.0, "dw1": 0.02667, "dw2": 0.03473}, {"epoch": 117, "w1": 4.8011, "w2": 2.6797, "loss": 0.1207, "acc": 82.0, "dw1": 0.02652, "dw2": 0.03442}, {"epoch": 118, "w1": 4.805, "w2": 2.6909, "loss": 0.12049, "acc": 82.0, "dw1": 0.02637, "dw2": 0.03411}, {"epoch": 119, "w1": 4.8088, "w2": 2.7021, "loss": 0.12028, "acc": 82.0, "dw1": 0.02622, "dw2": 0.03381}, {"epoch": 120, "w1": 4.8127, "w2": 2.7131, "loss": 0.12007, "acc": 82.0, "dw1": 0.02607, "dw2": 0.03352}, {"epoch": 121, "w1": 4.8165, "w2": 2.7241, "loss": 0.11987, "acc": 82.0, "dw1": 0.02592, "dw2": 0.03322}, {"epoch": 122, "w1": 4.8202, "w2": 2.7349, "loss": 0.11968, "acc": 82.0, "dw1": 0.02578, "dw2": 0.03293}, {"epoch": 123, "w1": 4.8239, "w2": 2.7457, "loss": 0.11948, "acc": 82.0, "dw1": 0.02563, "dw2": 0.03265}, {"epoch": 124, "w1": 4.8276, "w2": 2.7564, "loss": 0.11929, "acc": 82.0, "dw1": 0.02548, "dw2": 0.03237}, {"epoch": 125, "w1": 4.8313, "w2": 2.767, "loss": 0.11911, "acc": 82.0, "dw1": 0.02534, "dw2": 0.03209}, {"epoch": 126, "w1": 4.8349, "w2": 2.7774, "loss": 0.11893, "acc": 82.0, "dw1": 0.02519, "dw2": 0.03182}, {"epoch": 127, "w1": 4.8385, "w2": 2.7878, "loss": 0.11875, "acc": 82.0, "dw1": 0.02505, "dw2": 0.03155}, {"epoch": 128, "w1": 4.8421, "w2": 2.7982, "loss": 0.11857, "acc": 82.0, "dw1": 0.02491, "dw2": 0.03128}, {"epoch": 129, "w1": 4.8457, "w2": 2.8084, "loss": 0.1184, "acc": 82.0, "dw1": 0.02477, "dw2": 0.03102}, {"epoch": 130, "w1": 4.8492, "w2": 2.8185, "loss": 0.11823, "acc": 82.0, "dw1": 0.02462, "dw2": 0.03075}, {"epoch": 131, "w1": 4.8527, "w2": 2.8286, "loss": 0.11806, "acc": 82.0, "dw1": 0.02448, "dw2": 0.0305}, {"epoch": 132, "w1": 4.8561, "w2": 2.8385, "loss": 0.1179, "acc": 82.4, "dw1": 0.02434, "dw2": 0.03024}, {"epoch": 133, "w1": 4.8596, "w2": 2.8484, "loss": 0.11774, "acc": 82.4, "dw1": 0.0242, "dw2": 0.02999}, {"epoch": 134, "w1": 4.863, "w2": 2.8582, "loss": 0.11758, "acc": 82.4, "dw1": 0.02407, "dw2": 0.02975}, {"epoch": 135, "w1": 4.8664, "w2": 2.868, "loss": 0.11742, "acc": 82.4, "dw1": 0.02393, "dw2": 0.0295}, {"epoch": 136, "w1": 4.8697, "w2": 2.8776, "loss": 0.11727, "acc": 82.4, "dw1": 0.02379, "dw2": 0.02926}, {"epoch": 137, "w1": 4.873, "w2": 2.8872, "loss": 0.11712, "acc": 82.4, "dw1": 0.02365, "dw2": 0.02902}, {"epoch": 138, "w1": 4.8763, "w2": 2.8967, "loss": 0.11697, "acc": 82.4, "dw1": 0.02352, "dw2": 0.02879}, {"epoch": 139, "w1": 4.8796, "w2": 2.9061, "loss": 0.11682, "acc": 82.4, "dw1": 0.02338, "dw2": 0.02856}, {"epoch": 140, "w1": 4.8828, "w2": 2.9154, "loss": 0.11668, "acc": 82.4, "dw1": 0.02324, "dw2": 0.02833}, {"epoch": 141, "w1": 4.8861, "w2": 2.9247, "loss": 0.11654, "acc": 82.4, "dw1": 0.02311, "dw2": 0.0281}, {"epoch": 142, "w1": 4.8893, "w2": 2.9339, "loss": 0.1164, "acc": 82.8, "dw1": 0.02297, "dw2": 0.02787}, {"epoch": 143, "w1": 4.8924, "w2": 2.943, "loss": 0.11626, "acc": 82.8, "dw1": 0.02284, "dw2": 0.02765}, {"epoch": 144, "w1": 4.8956, "w2": 2.952, "loss": 0.11613, "acc": 82.8, "dw1": 0.02271, "dw2": 0.02743}, {"epoch": 145, "w1": 4.8987, "w2": 2.961, "loss": 0.116, "acc": 82.8, "dw1": 0.02257, "dw2": 0.02722}, {"epoch": 146, "w1": 4.9018, "w2": 2.9699, "loss": 0.11587, "acc": 82.8, "dw1": 0.02244, "dw2": 0.027}, {"epoch": 147, "w1": 4.9049, "w2": 2.9787, "loss": 0.11574, "acc": 82.8, "dw1": 0.02231, "dw2": 0.02679}, {"epoch": 148, "w1": 4.9079, "w2": 2.9875, "loss": 0.11561, "acc": 83.2, "dw1": 0.02218, "dw2": 0.02658}, {"epoch": 149, "w1": 4.911, "w2": 2.9962, "loss": 0.11549, "acc": 83.6, "dw1": 0.02205, "dw2": 0.02637}, {"epoch": 150, "w1": 4.914, "w2": 3.0048, "loss": 0.11537, "acc": 83.6, "dw1": 0.02192, "dw2": 0.02617}, {"epoch": 151, "w1": 4.9169, "w2": 3.0134, "loss": 0.11525, "acc": 83.6, "dw1": 0.02179, "dw2": 0.02597}, {"epoch": 152, "w1": 4.9199, "w2": 3.0219, "loss": 0.11513, "acc": 83.6, "dw1": 0.02166, "dw2": 0.02577}, {"epoch": 153, "w1": 4.9228, "w2": 3.0303, "loss": 0.11501, "acc": 83.6, "dw1": 0.02153, "dw2": 0.02557}, {"epoch": 154, "w1": 4.9257, "w2": 3.0386, "loss": 0.1149, "acc": 83.6, "dw1": 0.0214, "dw2": 0.02537}, {"epoch": 155, "w1": 4.9286, "w2": 3.047, "loss": 0.11479, "acc": 83.6, "dw1": 0.02127, "dw2": 0.02518}, {"epoch": 156, "w1": 4.9315, "w2": 3.0552, "loss": 0.11468, "acc": 83.6, "dw1": 0.02114, "dw2": 0.02499}, {"epoch": 157, "w1": 4.9344, "w2": 3.0634, "loss": 0.11457, "acc": 83.6, "dw1": 0.02102, "dw2": 0.0248}, {"epoch": 158, "w1": 4.9372, "w2": 3.0715, "loss": 0.11446, "acc": 83.6, "dw1": 0.02089, "dw2": 0.02461}, {"epoch": 159, "w1": 4.94, "w2": 3.0795, "loss": 0.11436, "acc": 83.6, "dw1": 0.02076, "dw2": 0.02442}, {"epoch": 160, "w1": 4.9428, "w2": 3.0875, "loss": 0.11425, "acc": 83.6, "dw1": 0.02064, "dw2": 0.02424}, {"epoch": 161, "w1": 4.9455, "w2": 3.0955, "loss": 0.11415, "acc": 84.0, "dw1": 0.02051, "dw2": 0.02406}, {"epoch": 162, "w1": 4.9483, "w2": 3.1033, "loss": 0.11405, "acc": 84.0, "dw1": 0.02039, "dw2": 0.02388}, {"epoch": 163, "w1": 4.951, "w2": 3.1112, "loss": 0.11395, "acc": 84.0, "dw1": 0.02026, "dw2": 0.0237}, {"epoch": 164, "w1": 4.9537, "w2": 3.1189, "loss": 0.11385, "acc": 84.0, "dw1": 0.02014, "dw2": 0.02352}, {"epoch": 165, "w1": 4.9564, "w2": 3.1266, "loss": 0.11376, "acc": 84.0, "dw1": 0.02001, "dw2": 0.02335}, {"epoch": 166, "w1": 4.959, "w2": 3.1343, "loss": 0.11366, "acc": 84.0, "dw1": 0.01989, "dw2": 0.02318}, {"epoch": 167, "w1": 4.9617, "w2": 3.1419, "loss": 0.11357, "acc": 84.0, "dw1": 0.01977, "dw2": 0.023}, {"epoch": 168, "w1": 4.9643, "w2": 3.1494, "loss": 0.11348, "acc": 84.4, "dw1": 0.01964, "dw2": 0.02283}, {"epoch": 169, "w1": 4.9669, "w2": 3.1569, "loss": 0.11339, "acc": 84.4, "dw1": 0.01952, "dw2": 0.02267}, {"epoch": 170, "w1": 4.9695, "w2": 3.1643, "loss": 0.1133, "acc": 84.4, "dw1": 0.0194, "dw2": 0.0225}, {"epoch": 171, "w1": 4.9721, "w2": 3.1717, "loss": 0.11321, "acc": 84.4, "dw1": 0.01928, "dw2": 0.02234}, {"epoch": 172, "w1": 4.9746, "w2": 3.179, "loss": 0.11312, "acc": 84.4, "dw1": 0.01916, "dw2": 0.02217}, {"epoch": 173, "w1": 4.9771, "w2": 3.1863, "loss": 0.11304, "acc": 84.4, "dw1": 0.01904, "dw2": 0.02201}, {"epoch": 174, "w1": 4.9796, "w2": 3.1935, "loss": 0.11296, "acc": 84.4, "dw1": 0.01892, "dw2": 0.02185}, {"epoch": 175, "w1": 4.9821, "w2": 3.2007, "loss": 0.11287, "acc": 84.4, "dw1": 0.0188, "dw2": 0.02169}, {"epoch": 176, "w1": 4.9846, "w2": 3.2078, "loss": 0.11279, "acc": 84.4, "dw1": 0.01868, "dw2": 0.02154}, {"epoch": 177, "w1": 4.9871, "w2": 3.2149, "loss": 0.11271, "acc": 84.4, "dw1": 0.01856, "dw2": 0.02138}, {"epoch": 178, "w1": 4.9895, "w2": 3.2219, "loss": 0.11263, "acc": 84.4, "dw1": 0.01844, "dw2": 0.02123}, {"epoch": 179, "w1": 4.9919, "w2": 3.2288, "loss": 0.11256, "acc": 84.4, "dw1": 0.01833, "dw2": 0.02107}, {"epoch": 180, "w1": 4.9943, "w2": 3.2358, "loss": 0.11248, "acc": 84.4, "dw1": 0.01821, "dw2": 0.02092}, {"epoch": 181, "w1": 4.9967, "w2": 3.2426, "loss": 0.11241, "acc": 84.4, "dw1": 0.01809, "dw2": 0.02077}, {"epoch": 182, "w1": 4.9991, "w2": 3.2495, "loss": 0.11233, "acc": 84.4, "dw1": 0.01798, "dw2": 0.02062}, {"epoch": 183, "w1": 5.0014, "w2": 3.2562, "loss": 0.11226, "acc": 84.4, "dw1": 0.01786, "dw2": 0.02048}, {"epoch": 184, "w1": 5.0038, "w2": 3.263, "loss": 0.11219, "acc": 84.8, "dw1": 0.01775, "dw2": 0.02033}, {"epoch": 185, "w1": 5.0061, "w2": 3.2696, "loss": 0.11212, "acc": 84.8, "dw1": 0.01763, "dw2": 0.02019}, {"epoch": 186, "w1": 5.0084, "w2": 3.2763, "loss": 0.11205, "acc": 84.8, "dw1": 0.01752, "dw2": 0.02004}, {"epoch": 187, "w1": 5.0106, "w2": 3.2829, "loss": 0.11198, "acc": 84.8, "dw1": 0.0174, "dw2": 0.0199}, {"epoch": 188, "w1": 5.0129, "w2": 3.2894, "loss": 0.11191, "acc": 84.8, "dw1": 0.01729, "dw2": 0.01976}, {"epoch": 189, "w1": 5.0152, "w2": 3.2959, "loss": 0.11185, "acc": 84.8, "dw1": 0.01718, "dw2": 0.01962}, {"epoch": 190, "w1": 5.0174, "w2": 3.3024, "loss": 0.11178, "acc": 84.8, "dw1": 0.01706, "dw2": 0.01948}, {"epoch": 191, "w1": 5.0196, "w2": 3.3088, "loss": 0.11172, "acc": 84.8, "dw1": 0.01695, "dw2": 0.01935}, {"epoch": 192, "w1": 5.0218, "w2": 3.3152, "loss": 0.11166, "acc": 84.8, "dw1": 0.01684, "dw2": 0.01921}, {"epoch": 193, "w1": 5.024, "w2": 3.3215, "loss": 0.11159, "acc": 84.8, "dw1": 0.01673, "dw2": 0.01908}, {"epoch": 194, "w1": 5.0262, "w2": 3.3278, "loss": 0.11153, "acc": 84.8, "dw1": 0.01662, "dw2": 0.01894}, {"epoch": 195, "w1": 5.0283, "w2": 3.334, "loss": 0.11147, "acc": 84.8, "dw1": 0.01651, "dw2": 0.01881}, {"epoch": 196, "w1": 5.0304, "w2": 3.3402, "loss": 0.11141, "acc": 84.8, "dw1": 0.0164, "dw2": 0.01868}, {"epoch": 197, "w1": 5.0326, "w2": 3.3463, "loss": 0.11136, "acc": 84.8, "dw1": 0.01629, "dw2": 0.01855}, {"epoch": 198, "w1": 5.0347, "w2": 3.3525, "loss": 0.1113, "acc": 84.8, "dw1": 0.01619, "dw2": 0.01842}, {"epoch": 199, "w1": 5.0368, "w2": 3.3585, "loss": 0.11124, "acc": 84.8, "dw1": 0.01608, "dw2": 0.01829}];
+let currentEpoch = 0;
+let showGradient = false;
+
+const w1_vals = data.map(d => d.w1);
+const w2_vals = data.map(d => d.w2);
+const loss_vals = data.map(d => d.loss);
+
+const minW1 = Math.min(...w1_vals) - 0.2, maxW1 = Math.max(...w1_vals) + 0.2;
+const minW2 = Math.min(...w2_vals) - 0.2, maxW2 = Math.max(...w2_vals) + 0.2;
+const minLoss = Math.min(...loss_vals) - 0.05, maxLoss = Math.max(...loss_vals) + 0.05;
+
+// Reference surface
+const surfaceX = [], surfaceY = [], surfaceZ = [];
+const gridSteps = 22;
+for (let i = 0; i <= gridSteps; i++) surfaceX.push(minW1 + (maxW1 - minW1) * (i / gridSteps));
+for (let j = 0; j <= gridSteps; j++) surfaceY.push(minW2 + (maxW2 - minW2) * (j / gridSteps));
+for (let j = 0; j <= gridSteps; j++) {
+  const row = [];
+  const y = surfaceY[j];
+  for (let i = 0; i <= gridSteps; i++) {
+    const x = surfaceX[i];
+    const dX = (x - maxW1);
+    const dY = (y - maxW2);
+    const z = minLoss + 0.2 * (dX * dX + dY * dY * 0.4);
+    row.push(z);
+  }
+  surfaceZ.push(row);
+}
+
+const surfaceTrace = {
+  type: 'surface',
+  x: surfaceX,
+  y: surfaceY,
+  z: surfaceZ,
+  opacity: 0.18,
+  showscale: false,
+  colorscale: 'Blues',
+  hoverinfo: 'none'
+};
+
+const pathTrace = {
+  type: 'scatter3d',
+  mode: 'lines',
+  x: [w1_vals[0]],
+  y: [w2_vals[0]],
+  z: [loss_vals[0]],
+  line: { color: '#7fe1d6', width: 5 },
+  hoverinfo: 'none'
+};
+
+const pointTrace = {
+  type: 'scatter3d',
+  mode: 'markers',
+  x: [w1_vals[0]],
+  y: [w2_vals[0]],
+  z: [loss_vals[0]],
+  marker: { size: 7, color: '#bcf587', line: { color: '#ffffff', width: 2 } },
+  hoverinfo: 'none'
+};
+
+// 3D Arrow (──►)
+const arrowTrace = {
+  type: 'scatter3d',
+  mode: 'lines',
+  x: [null],
+  y: [null],
+  z: [null],
+  line: { color: '#ff3366', width: 8 },
+  hoverinfo: 'none'
+};
+
+const layout = {
+  paper_bgcolor: '#111721',
+  plot_bgcolor: '#111721',
+  margin: { l: 0, r: 0, b: 0, t: 0 },
+  scene: {
+    xaxis: { title: '||W1||', range: [minW1, maxW1], gridcolor: '#1e2633', zerolinecolor: '#2c3544' },
+    yaxis: { title: '||W2||', range: [minW2, maxW2], gridcolor: '#1e2633', zerolinecolor: '#2c3544' },
+    zaxis: { title: 'Loss', range: [minLoss, maxLoss], gridcolor: '#1e2633', zerolinecolor: '#2c3544' },
+    camera: { eye: { x: 1.5, y: -1.7, z: 1.2 } }
+  },
+  showlegend: false
+};
+
+Plotly.newPlot('plot', [surfaceTrace, pathTrace, pointTrace, arrowTrace], layout, { responsive: true, displayModeBar: false });
+
+function computeStickArrow(x0, y0, z0, x1, y1, z1) {
+  const rx = maxW1 - minW1, ry = maxW2 - minW2, rz = maxLoss - minLoss;
+  const dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
+  const nx = dx / rx, ny = dy / ry, nz = dz / rz;
+  const nlen = Math.sqrt(nx*nx + ny*ny + nz*nz);
+  if (nlen < 1e-6) return { x: [null], y: [null], z: [null] };
+
+  // Fixed visual length in scene
+  const L = 0.28;
+  const ux = (nx / nlen) * rx * L;
+  const uy = (ny / nlen) * ry * L;
+  const uz = (nz / nlen) * rz * L;
+
+  const tipX = x0 + ux;
+  const tipY = y0 + uy;
+  const tipZ = z0 + uz;
+
+  // Barbs pointing back like ->
+  const barbFrac = 0.38;
+  const spread = 0.25;
+  
+  let px = -uy/ry, py = ux/rx;
+  const plen = Math.sqrt(px*px + py*py);
+  px = (px / plen) * rx * spread * L;
+  py = (py / plen) * ry * spread * L;
+
+  const bx1 = tipX - ux * barbFrac + px;
+  const by1 = tipY - uy * barbFrac + py;
+  const bz1 = tipZ - uz * barbFrac;
+
+  const bx2 = tipX - ux * barbFrac - px;
+  const by2 = tipY - uy * barbFrac - py;
+  const bz2 = tipZ - uz * barbFrac;
+
+  return {
+    x: [x0, tipX, bx1, null, tipX, bx2],
+    y: [y0, tipY, by1, null, tipY, by2],
+    z: [z0, tipZ, bz1, null, tipZ, bz2]
+  };
+}
+
+function renderState(epochIdx, isGrad) {
+  currentEpoch = Math.max(0, Math.min(data.length - 1, epochIdx));
+  showGradient = isGrad;
+  const d = data[currentEpoch];
+
+  document.getElementById('hudEpoch').textContent = d.epoch;
+  document.getElementById('hudLoss').textContent = d.loss.toFixed(4);
+  document.getElementById('hudW1').textContent = d.w1.toFixed(3);
+  document.getElementById('hudW2').textContent = d.w2.toFixed(3);
+  document.getElementById('hudGrad').textContent = Math.sqrt(d.dw1*d.dw1 + d.dw2*d.dw2).toFixed(4);
+
+  const badge = document.getElementById('badgeState');
+  if (!showGradient) {
+    badge.className = 'badge-state badge-w';
+    badge.textContent = 'Step: (W1, W2, Loss)';
+  } else {
+    badge.className = 'badge-state badge-g';
+    badge.textContent = 'Step: Gradient (──►)';
+  }
+
+  const pathX = w1_vals.slice(0, currentEpoch + 1);
+  const pathY = w2_vals.slice(0, currentEpoch + 1);
+  const pathZ = loss_vals.slice(0, currentEpoch + 1);
+
+  let arrow = { x: [null], y: [null], z: [null] };
+  if (showGradient && currentEpoch < data.length - 1) {
+    const next = data[currentEpoch + 1];
+    arrow = computeStickArrow(d.w1, d.w2, d.loss, next.w1, next.w2, next.loss);
+  }
+
+  Plotly.restyle('plot', { x: [pathX], y: [pathY], z: [pathZ] }, [1]);
+  Plotly.restyle('plot', { x: [[d.w1]], y: [[d.w2]], z: [[d.loss]] }, [2]);
+  Plotly.restyle('plot', { x: [arrow.x], y: [arrow.y], z: [arrow.z] }, [3]);
+}
+
+// Listen for scroll progress from parent window
+window.addEventListener('message', (e) => {
+  if (e.data && typeof e.data.progress === 'number') {
+    const p = Math.max(0, Math.min(1, e.data.progress));
+    // Each step has 2 phases: show W, then show gradient
+    const totalPhases = (data.length - 1) * 2;
+    const phaseIdx = Math.floor(p * totalPhases);
+    const epoch = Math.floor(phaseIdx / 2);
+    const isGrad = (phaseIdx % 2 === 1);
+    renderState(epoch, isGrad);
+  }
+});
+
+// Also support direct step commands
+window.renderStep = renderState;
+renderState(0, false);
+</script>
+</body>
+</html>
