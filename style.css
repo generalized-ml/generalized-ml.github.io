@@ -5,3 +5,7 @@
 /* Solid card surfaces preserve contrast over the animated background. */
 .card{padding:30px;border:1px solid var(--line);border-radius:12px;background:rgba(23,30,41,.92)}
 @media(max-width:650px){.card{padding:23px}}
+
+.hero-quote{margin:24px 0 0;max-width:660px;color:var(--muted)}
+.hero-quote p{margin:0;font-size:19px}
+.hero-quote footer{display:block;border:0;padding:8px 0 0;font-size:13px}
