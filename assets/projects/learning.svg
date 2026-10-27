@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" role="img" aria-labelledby="title desc">
+<title id="title">generalized-ml algorithm bucket</title>
+<desc id="desc">A bucket of learned algorithms and concepts: Attention, LSTM, RNN, Boosting, Bagging, RLHF, KV Cache, and Vector database search.</desc>
+<rect width="640" height="260" rx="12" fill="#171e29"/>
+<path d="M143 64C107 4 533 4 497 64" fill="none" stroke="#6e865f" stroke-width="5"/>
+<path d="M138 61H502L460 234Q320 259 180 234Z" fill="#1c2b26" stroke="#bcf587" stroke-width="3"/>
+<ellipse cx="320" cy="61" rx="182" ry="12" fill="#26392f" stroke="#bcf587" stroke-width="3"/>
+<g font-family="system-ui,sans-serif" font-weight="600">
+<rect x="218" y="14" width="204" height="30" rx="15" fill="#171e29"/>
+<text x="320" y="35" text-anchor="middle" fill="#bcf587" font-size="18">MY ALGORITHM BUCKET</text>
+<rect x="161" y="78" width="142" height="30" rx="8" fill="#26392f" stroke="#536e49"/><text x="232.0" y="98" text-anchor="middle" fill="#edffe1" font-size="16">Attention</text>
+<rect x="315" y="78" width="90" height="30" rx="8" fill="#26392f" stroke="#536e49"/><text x="360.0" y="98" text-anchor="middle" fill="#edffe1" font-size="16">LSTM</text>
+<rect x="417" y="78" width="72" height="30" rx="8" fill="#26392f" stroke="#536e49"/><text x="453.0" y="98" text-anchor="middle" fill="#edffe1" font-size="16">RNN</text>
+<rect x="171" y="118" width="137" height="30" rx="8" fill="#26392f" stroke="#536e49"/><text x="239.5" y="138" text-anchor="middle" fill="#edffe1" font-size="16">Boosting</text>
+<rect x="320" y="118" width="148" height="30" rx="8" fill="#26392f" stroke="#536e49"/><text x="394.0" y="138" text-anchor="middle" fill="#edffe1" font-size="16">Bagging</text>
+<rect x="181" y="158" width="98" height="30" rx="8" fill="#26392f" stroke="#536e49"/><text x="230.0" y="178" text-anchor="middle" fill="#edffe1" font-size="16">RLHF</text>
+<rect x="291" y="158" width="167" height="30" rx="8" fill="#26392f" stroke="#536e49"/><text x="374.5" y="178" text-anchor="middle" fill="#edffe1" font-size="16">KV Cache</text>
+<rect x="191" y="198" width="257" height="30" rx="8" fill="#26392f" stroke="#536e49"/><text x="319.5" y="218" text-anchor="middle" fill="#edffe1" font-size="16">Vector database search</text>
+</g>
+</svg>
