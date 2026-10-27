@@ -98,6 +98,16 @@ const arrowTrace = {
   hoverinfo: 'none'
 };
 
+// Keep the full scene in view on narrow screens without distorting it.
+function backgroundFraming() {
+  const narrow = window.innerWidth <= 650;
+  const scale = narrow ? 1.5 : 1.18;
+  return {
+    'scene.domain.x': narrow ? [0, 1] : [0.06, 0.94],
+    'scene.camera.eye': { x: 1.45 * scale, y: -1.65 * scale, z: 1.15 * scale }
+  };
+}
+const framing = backgroundFraming();
 const layout = {
   paper_bgcolor: 'rgba(0,0,0,0)',
   plot_bgcolor: 'rgba(0,0,0,0)',
@@ -106,12 +116,16 @@ const layout = {
     xaxis: { showgrid: true, gridcolor: 'rgba(44, 53, 68, 0.4)', showticklabels: false, title: '', range: [minW1, maxW1], zerolinecolor: 'rgba(44,53,68,0.5)' },
     yaxis: { showgrid: true, gridcolor: 'rgba(44, 53, 68, 0.4)', showticklabels: false, title: '', range: [minW2, maxW2], zerolinecolor: 'rgba(44,53,68,0.5)' },
     zaxis: { showgrid: true, gridcolor: 'rgba(44, 53, 68, 0.4)', showticklabels: false, title: '', range: [minLoss, maxLoss], zerolinecolor: 'rgba(44,53,68,0.5)' },
-    camera: { eye: { x: 1.45, y: -1.65, z: 1.15 } }
+    domain: { x: framing['scene.domain.x'], y: [0, 1] },
+    camera: { eye: framing['scene.camera.eye'] }
   },
   showlegend: false
 };
 
 Plotly.newPlot('plot', [surfaceTrace, pathTrace, pointTrace, arrowTrace], layout, { responsive: true, displayModeBar: false });
+window.addEventListener('resize', () => {
+  Plotly.relayout('plot', backgroundFraming());
+});
 
 function computeStickArrow(x0, y0, z0, x1, y1, z1) {
   const rx = maxW1 - minW1, ry = maxW2 - minW2, rz = maxLoss - minLoss;
