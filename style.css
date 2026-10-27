@@ -39,3 +39,14 @@ nav a[aria-current="page"]{color:var(--accent)}
 .blog-empty h2{font-size:26px}
 .blog-empty p{color:var(--muted);max-width:620px}
 @media(max-width:650px){.blog-page{padding-block:42px 56px}.blog-empty{padding:24px}}
+
+/* Latest Work is a single-column project list at every screen size. */
+#projects .grid{grid-template-columns:minmax(0,1fr)}
+
+/* Project list: details on the left, illustration on the right. */
+#projects .card{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:30px;align-items:center}
+#projects .project-diagram{margin:0;height:auto;aspect-ratio:2 / 1}
+.project-content{display:flex;flex-direction:column;min-width:0}
+.project-content .card-top{margin-bottom:16px}
+.project-content>p{color:var(--muted);font-size:14px;margin:12px 0 22px}
+@media(max-width:650px){#projects .card{grid-template-columns:minmax(0,1fr);gap:24px}}
