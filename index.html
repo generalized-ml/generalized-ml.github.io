@@ -5,7 +5,13 @@
 <title>Raghav Sharma | Machine Learning & AI</title>
 <meta name="description" content="Raghav Sharma’s machine learning and AI portfolio. Explore Pandas-Agent and ongoing projects in education, image search, and RAG.">
 <meta name="theme-color" content="#10151e">
-<link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?v=20261027">
+<style>
+/* Keep the page readable and the background full-screen while CSS loads. */
+body { margin: 0; background: #10151e; color: #fff; isolation: isolate; }
+.bg-canvas-container { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.bg-canvas-container iframe { display: block; width: 100%; height: 100%; border: 0; opacity: .28; }
+</style>
 </head>
 <body>
 <div class="bg-canvas-container" aria-hidden="true">
@@ -52,6 +58,7 @@
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
+  iframe.addEventListener('load', onScroll);
   onScroll();
 })();
 </script>
