@@ -50,3 +50,11 @@ nav a[aria-current="page"]{color:var(--accent)}
 .project-content .card-top{margin-bottom:16px}
 .project-content>p{color:var(--muted);font-size:14px;margin:12px 0 22px}
 @media(max-width:650px){#projects .card{grid-template-columns:minmax(0,1fr);gap:24px}}
+
+/* A native repository link covers each project card. */
+#projects .card{position:relative}
+.project-card-link::after{content:"";position:absolute;inset:0;border-radius:12px}
+.project-card-link:focus-visible{outline:none}
+.project-card-link:focus-visible::after{outline:3px solid var(--accent);outline-offset:4px}
+#projects .card:hover{border-color:#536746}
+#projects .card:hover h3{color:var(--accent)}
