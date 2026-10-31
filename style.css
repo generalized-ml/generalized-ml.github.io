@@ -1228,21 +1228,32 @@ body>footer {
 
 /* Circular portrait with a black border. */
 .profile-card .profile-photo {
-  width:110px;
-  height:110px;
+  width:130px;
+  height:130px;
   border-radius:50%;
   box-shadow:none;
   border:2px solid #000000;
 }
 @media (max-width:899px) {
   .profile-card .profile-photo {
-    width:72px;
-    height:72px;
+    width:84px;
+    height:84px;
+  }
+}
+@media (max-width:370px) {
+  .profile-card .profile-photo {
+    width:70px;
+    height:70px;
+  }
+}
+
+@media (max-width:899px) {
+  .hero-layout .profile-card {
+    grid-template-columns:84px minmax(0, 1fr);
   }
 }
 @media (max-width:360px) {
-  .profile-card .profile-photo {
-    width:60px;
-    height:60px;
+  .hero-layout .profile-card {
+    grid-template-columns:70px minmax(0, 1fr);
   }
 }
