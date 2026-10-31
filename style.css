@@ -1258,71 +1258,39 @@ body>footer {
   }
 }
 
-/* Darker skill backgrounds retain readable black text. */
-.stack-list li {
-  padding:10px 12px;
-  background:#E4D4AD;
-  border:1px solid #C4AE7E;
-  border-radius:10px;
-}
-
-/* Two-part proficiency badges, matching the supplied reference. */
-.stack-list.skill-badges {
+/* Logo badges keep all skills together without proficiency labels. */
+.stack-list.skill-logos {
   display:flex;
   flex-wrap:wrap;
   justify-content:flex-start;
-  gap:10px 8px;
+  gap:10px;
   max-width:none;
   margin-top:18px;
 }
-.skill-badges li {
-  display:inline-flex;
-  align-items:stretch;
-  gap:0;
-  min-height:0;
-  padding:0;
-  border:0;
-  border-radius:5px;
-  overflow:hidden;
-  background:none;
-  font:16px/1.4 Ubuntu, sans-serif;
-  color:#fff;
+.skill-logos li {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-height:44px;
+  padding:8px 12px;
+  background:#E4D4AD;
+  border:1px solid #C4AE7E;
+  border-radius:9px;
+  color:var(--text);
+  font:13px/1.5 Ubuntu, sans-serif;
 }
-.skill-badges .skill-name,
-.skill-badges .skill-level {
-  display:block;
-  padding:5px 9px;
-  color:#fff;
-  white-space:nowrap;
-  text-shadow:0 1px 2px rgb(0 0 0 / 45%);
-}
-.skill-badges .skill-name {
-  background:linear-gradient(#626262, #444);
-}
-.skill-badges .expert {
-  background:linear-gradient(#55bd20, #319b00);
-}
-.skill-badges .advanced {
-  background:linear-gradient(#82b733, #568c0c);
-}
-.skill-badges .intermediate {
-  background:linear-gradient(#d4ba20, #ae9400);
-}
-.skill-badges .learning {
-  background:linear-gradient(#328dc1, #0871a7);
-}
-.stack-list.learning-skills {
-  margin-top:24px;
+.skill-logos img {
+  width:26px;
+  height:26px;
+  object-fit:contain;
+  flex-shrink:0;
 }
 @media (max-width:720px) {
-  .skill-badges li {
-    font-size:13px;
-  }
-  .skill-badges .skill-name,
-  .skill-badges .skill-level {
-    padding:5px 8px;
-  }
-  .stack-list.skill-badges {
+  .stack-list.skill-logos {
     gap:8px;
+  }
+  .skill-logos li {
+    font-size:12px;
+    padding:7px 10px;
   }
 }
