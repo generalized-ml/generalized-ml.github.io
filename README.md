@@ -41,3 +41,11 @@ Open index.html in a browser, or run `python3 -m http.server 8000` in this folde
 - Email and LinkedIn are public contact links. Phone, postal code and the résumé PDF are not bundled.
 - To add project links, edit the corresponding card in index.html. Add screenshots under assets/ and use relative paths.
 - No résumé download button is included because the original PDF contains a phone number. Add a sanitized PDF if you want one.
+
+## Search visibility
+
+The homepage and blog include canonical URLs, page descriptions, social sharing metadata, and JSON-LD structured data. `robots.txt` points search engines to `sitemap.xml`.
+
+After publishing these files on GitHub Pages, add `https://generalized-ml.github.io/` to Google Search Console, verify ownership using the supplied verification method, and submit `https://generalized-ml.github.io/sitemap.xml`. Use URL Inspection to request indexing of the homepage. No Search Console ownership token is included in this repository.
+
+Update canonical URLs, sitemap locations, social image URLs, and JSON-LD if the site's domain changes. Add published articles to the sitemap as they become available. Metadata supports discovery and accurate previews; rankings depend on relevance and other signals.
