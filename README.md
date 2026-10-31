@@ -10,7 +10,8 @@ Ready-to-upload static files for https://generalized-ml.github.io.
 
 ## Files
 - index.html: full résumé-based content, project cards, experience, research, education, contact.
-- style.css: responsive dark design, lime accents, mobile layouts.
+- style.css: responsive charcoal theme, mint accents, Ubuntu and IBM Plex Mono typography, and mobile layouts.
+- assets/fonts/: locally hosted fonts used by the theme.
 - favicon.svg: tab icon.
 - .nojekyll: static serving without Jekyll.
 - assets/latent-space.html: generated, interactive 3D illustration; works offline.
