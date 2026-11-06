@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" role="img" aria-labelledby="title desc">
+  <title id="title">PDF to structured MCQ data</title>
+  <desc id="desc">Read a PDF, extract multiple-choice questions, and output JSON with question, options, answer, and images fields. Example data is illustrative.</desc>
+  <rect width="640" height="320" rx="12" fill="#FFFCF5"/>
+  <g font-family="system-ui,sans-serif">
+    <text x="24" y="34" fill="#176B5B" font-size="14" font-weight="700" letter-spacing="1">PDF TO STRUCTURED MCQ DATA</text>
+    <path d="M38 86h58l24 24v101H38Z" fill="#FAF3E0" stroke="#DED5C2" stroke-width="2"/>
+    <path d="M96 86v24h24" fill="none" stroke="#DED5C2" stroke-width="2"/>
+    <text x="79" y="143" text-anchor="middle" fill="#176B5B" font-size="20" font-weight="700">PDF</text>
+    <path d="M54 161h49m-49 12h36m-36 12h44" stroke="#59635F" stroke-width="2"/>
+    <text x="79" y="239" text-anchor="middle" fill="#59635F" font-size="13">Read PDF</text>
+    <g fill="none" stroke="#176B5B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M137 150h30m-7-6 7 6-7 6"/>
+      <path d="M307 150h28m-7-6 7 6-7 6"/>
+    </g>
+    <rect x="181" y="115" width="112" height="70" rx="12" fill="#E3EBDD" stroke="#DED5C2"/>
+    <text x="237" y="144" text-anchor="middle" fill="#176B5B" font-size="16" font-weight="700">MCQ</text>
+    <text x="237" y="166" text-anchor="middle" fill="#176B5B" font-size="16" font-weight="700">Extractor</text>
+    <text x="237" y="239" text-anchor="middle" fill="#59635F" font-size="13">Extract content</text>
+    <rect x="349" y="62" width="267" height="200" rx="12" fill="#F4F6EF" stroke="#DED5C2"/>
+    <text x="366" y="87" fill="#176B5B" font-size="13" font-weight="700">JSON OUTPUT</text>
+    <g font-family="monospace" font-size="13" fill="#202725">
+      <text x="366" y="115">{</text>
+      <text x="376" y="140">"question": "2 + 2 = ?",</text>
+      <text x="376" y="165">"options": ["3", "4"],</text>
+      <text x="376" y="190">"answer": "4",</text>
+      <text x="376" y="215">"images": ["figure.png"]</text>
+      <text x="366" y="240">}</text>
+    </g>
+    <text x="320" y="296" text-anchor="middle" fill="#59635F" font-size="13">LLM datasets · Future AI-based question papers</text>
+  </g>
+</svg>
