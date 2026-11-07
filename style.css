@@ -210,3 +210,27 @@ body>footer{display:flex;justify-content:space-between;gap:20px;padding-block:35
   .skill-card:hover,.project-diagram:hover img{transform:none}
   .contact-cta:hover>span{transform:none}
 }
+
+/* The introduction occupies the opening screen; work follows below. */
+.about{display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 108px);min-height:calc(100svh - 108px);padding-block:28px 92px}
+.about-layout{width:100%}
+.intro-scroll{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:48px;font:10px/1.8 var(--mono);letter-spacing:1px;color:var(--muted);white-space:nowrap}
+.intro-scroll-arrow{font-size:28px;animation:scroll-hint 1.4s ease-in-out infinite}
+@keyframes scroll-hint{0%,100%{transform:translateY(-3px);opacity:.55}50%{transform:translateY(9px);opacity:1}}
+#projects{border-top:1px solid var(--line);scroll-margin-top:24px}
+@media(max-width:760px){
+ .about{min-height:calc(100vh - 76px);min-height:calc(100svh - 76px);padding-block:16px 80px}
+ .about>.section-title{margin-bottom:22px}
+ .about-layout{gap:22px}
+ .about-portrait{width:min(100%,180px)}
+ .about .career-strip{margin-top:16px;padding-top:14px}
+ .about .hero-quote{margin-top:16px}
+ .intro-scroll{bottom:12px}
+}
+@media(prefers-reduced-motion:reduce){.intro-scroll-arrow,#projects.is-visible>.section-head{animation:none}}
+
+.intro-scroll{padding-left:30px}
+.intro-scroll::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:17px;height:28px;border:1px solid var(--muted);border-radius:12px}
+.intro-scroll::after{content:'';position:absolute;left:8px;top:calc(50% - 8px);width:3px;height:6px;border-radius:2px;background:var(--text);animation:scroll-wheel 1.6s ease-in-out infinite}
+@keyframes scroll-wheel{0%{transform:translateY(0);opacity:0}30%{opacity:1}100%{transform:translateY(10px);opacity:0}}
+@media(prefers-reduced-motion:reduce){.intro-scroll::after{animation:none;opacity:1}}
