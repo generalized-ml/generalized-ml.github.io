@@ -35,38 +35,59 @@ if (introStage) {
   const layers = [title, copy, portrait, cue, ...cards, ...images];
   const compact = window.matchMedia('(max-width: 760px)');
   let frame = 0;
+  let previousTime = 0;
+  const positions = new Map();
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-  const setDepth = (element, y, scale = 1) => {
-    element.style.setProperty('--depth-y', `${y.toFixed(2)}px`);
-    element.style.setProperty('--depth-scale', scale.toFixed(4));
-  };
-  function updateDepth() {
+  function updateDepth(timestamp = 0) {
     frame = 0;
     if (motionPreference.matches) return;
+    const delta = previousTime ? clamp(timestamp - previousTime, 1, 50) : 16.67;
+    previousTime = timestamp;
+    const blend = 1 - Math.exp(-delta / 90);
     const height = window.innerHeight;
-    const stageRect = introStage.getBoundingClientRect();
-    const progress = clamp(-stageRect.top / Math.max(height * 0.85, 1), 0, 1);
+    const progress = clamp(-introStage.getBoundingClientRect().top / Math.max(height * 0.85, 1), 0, 1);
     const strength = compact.matches ? 0.4 : 1;
-    setDepth(title, -progress * 100 * strength);
-    setDepth(copy, -progress * 42 * strength);
-    setDepth(portrait, progress * 60 * strength, 1 + progress * 0.06 * strength);
-    cue.style.opacity = String(1 - clamp(progress * 3, 0, 1));
-    cue.style.visibility = progress > 0.55 ? 'hidden' : '';
+    const targets = [
+      [title, -progress * 64 * strength, 1],
+      [copy, -progress * 30 * strength, 1],
+      [portrait, progress * 32 * strength, 1 + progress * 0.035 * strength]
+    ];
+    // Read all geometry before applying styles to avoid repeated layout work.
     if (grid) {
       const gridTop = grid.getBoundingClientRect().top;
       cards.forEach(card => {
-        // offsetTop is unaffected by transforms, so scrolling reverses cleanly.
         const center = gridTop + card.offsetTop + card.offsetHeight / 2;
         const cardProgress = clamp((height / 2 - center) / Math.max(height, 1), -1, 1);
-        setDepth(card, -cardProgress * 36 * strength);
+        targets.push([card, -cardProgress * 36 * strength, 1]);
       });
     }
     images.forEach(image => {
       const rect = image.parentElement.getBoundingClientRect();
       if (rect.bottom < -100 || rect.top > height + 100) return;
       const imageProgress = clamp((height / 2 - rect.top - rect.height / 2) / Math.max(height, 1), -1, 1);
-      setDepth(image, imageProgress * 48 * strength, 1.04);
+      targets.push([image, imageProgress * 48 * strength, 1.04]);
     });
+    let moving = false;
+    targets.forEach(([element, targetY, targetScale]) => {
+      const current = positions.get(element) || { y: 0, scale: 1 };
+      current.y += (targetY - current.y) * blend;
+      current.scale += (targetScale - current.scale) * blend;
+      if (Math.abs(targetY - current.y) < 0.02) current.y = targetY;
+      if (Math.abs(targetScale - current.scale) < 0.0001) current.scale = targetScale;
+      moving ||= current.y !== targetY || current.scale !== targetScale;
+      positions.set(element, current);
+      element.style.setProperty('--depth-y', `${current.y.toFixed(2)}px`);
+      element.style.setProperty('--depth-scale', current.scale.toFixed(4));
+    });
+    const targetOpacity = 1 - clamp(progress * 3, 0, 1);
+    const previousOpacity = cue.style.opacity === '' ? 1 : Number(cue.style.opacity ?? 1);
+    let opacity = previousOpacity + (targetOpacity - previousOpacity) * blend;
+    if (Math.abs(targetOpacity - opacity) < 0.002) opacity = targetOpacity;
+    moving ||= opacity !== targetOpacity;
+    cue.style.opacity = String(opacity);
+    cue.style.visibility = opacity < 0.01 ? 'hidden' : '';
+    if (moving) frame = requestAnimationFrame(updateDepth);
+    else previousTime = 0;
   }
   function requestDepth() {
     if (!frame && !motionPreference.matches) frame = requestAnimationFrame(updateDepth);
@@ -74,6 +95,8 @@ if (introStage) {
   function configureDepth() {
     if (frame) cancelAnimationFrame(frame);
     frame = 0;
+    previousTime = 0;
+    positions.clear();
     introStage.classList.toggle('has-parallax', !motionPreference.matches);
     if (motionPreference.matches) {
       layers.forEach(element => {

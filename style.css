@@ -248,9 +248,9 @@ body>footer{display:flex;justify-content:space-between;gap:20px;padding-block:35
  .about-portrait figcaption{font-size:10.8px}
 }
 
-/* Layered parallax: pin the introduction briefly, then reveal the work. */
-.intro-stage.has-parallax{min-height:calc(135svh - 108px);position:relative;isolation:isolate}
-.intro-stage.has-parallax .about{position:sticky;top:0}
+/* Layered parallax follows native scrolling without a sticky release. */
+.intro-stage.has-parallax{position:relative;isolation:isolate}
+.intro-stage.has-parallax .about{position:relative}
 .intro-stage.has-parallax #about-title,
 .intro-stage.has-parallax .about-copy,
 .intro-stage.has-parallax .about-portrait,
@@ -274,3 +274,6 @@ body>footer{display:flex;justify-content:space-between;gap:20px;padding-block:35
 #projects .grid{position:relative}
 #projects .card{position:relative;translate:0 var(--depth-y,0px)}
 @media(prefers-reduced-motion:reduce){#projects .card{translate:none!important}}
+
+.intro-stage.has-parallax #about-title,.intro-stage.has-parallax .about-copy,.intro-stage.has-parallax .about-portrait{will-change:translate,scale}
+@media(prefers-reduced-motion:reduce){.intro-stage #about-title,.intro-stage .about-copy,.intro-stage .about-portrait{will-change:auto}}
