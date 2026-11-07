@@ -123,7 +123,7 @@ body>footer{display:flex;justify-content:space-between;gap:20px;padding-block:35
 @media(max-width:450px){.skills-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.project-diagram{aspect-ratio:4/3}.career-strip{gap:25px;font-size:19px}.contact-cta{gap:17px}.email-link{font-size:11px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 
-@media(max-width:760px){.section-title{font-size:clamp(7.33335px,2.1vw,16px);letter-spacing:-.33335px}.about{padding-top:30px}.about>.section-title,.contact>.section-title{margin-bottom:32px}.education{gap:32px}.education>div:first-child{grid-column:auto}}
+@media(max-width:760px){.section-title{font-size:clamp(18px,4.2vw,24px);letter-spacing:-.4px}.about{padding-top:30px}.about>.section-title,.contact>.section-title{margin-bottom:32px}.education{gap:32px}.education>div:first-child{grid-column:auto}}
 
 /* Center section introductions and content within the page. */
 .section-title{text-align:center}
@@ -159,3 +159,54 @@ body>footer{display:flex;justify-content:space-between;gap:20px;padding-block:35
 #about-title span{color:var(--text)}
 .about-columns{font-size:18px;line-height:1.7}
 @media(max-width:760px){.about-columns{font-size:16px}}
+
+/* Mobile browsers and embedded web views. */
+.about-copy,.contact-details,.contact-form,.job>div,.education-cards{min-width:0}
+.project-content h3,.skill-card h3,.education-cards h3,.job h3{overflow-wrap:anywhere}
+@media(max-width:760px){
+  html{scroll-padding-top:24px}
+  .nav{gap:16px;min-height:76px}
+  .mobile-nav summary{display:flex;align-items:center;justify-content:center;min-width:64px;min-height:44px}
+  .mobile-nav nav{top:66px;max-height:calc(100svh - 90px);overflow-y:auto}
+  .mobile-nav nav a{display:flex;align-items:center;min-height:44px;font-size:12px}
+  .section{padding-block:48px}
+  .about{padding-top:24px}
+  .section-head{margin-bottom:28px;gap:16px}
+  .section-head>p,.section-head>.text-link{margin-top:0}
+  .about-portrait{width:min(100%,280px)}
+  .about-portrait figcaption{flex-wrap:wrap;font-size:9px}
+  .about .career-strip{gap:20px;font-size:18px}
+  .hero-quote footer{font-size:10px}
+  #projects .grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:32px 20px}
+  .project-content>p{font-size:13px}
+  .number,.badge{font-size:10px}
+  #projects .tags span{font-size:11px}
+  .project-repo-link{min-height:44px;font-size:11px;margin-top:16px;gap:16px}
+  .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:11px;white-space:normal}
+  .project-diagram img{padding:12px}
+  .diagram-arrow{right:12px;bottom:12px;width:44px;height:44px}
+  .job{padding:20px}
+  .job ul{font-size:14px;line-height:1.7}
+  .job .eyebrow{font-size:10px}
+  #research h3{font-size:21px}
+  .education-cards h3{font-size:19px}
+  .contact-grid{gap:32px}
+  .contact-cta>span{flex-shrink:0}
+  .contact-cta small{font-size:10px;letter-spacing:.7px}
+  .email-link{font-size:12px;max-width:100%;min-height:44px}
+  .contact-socials{flex-wrap:wrap;gap:20px}
+  .contact-socials a{display:inline-flex;align-items:center;min-height:44px}
+  label{font-size:11px}
+  input,textarea{font-size:16px;min-height:44px}
+  .form-row{grid-template-columns:1fr}
+  .button{min-height:48px}
+  .form-note{font-size:12px}
+  body>footer{flex-wrap:wrap;gap:12px;font-size:9px;padding-block:20px}
+  body>footer a{display:inline-flex;align-items:center;min-height:44px}
+  .blog-page{padding-top:48px;padding-bottom:48px}
+  .blog-intro h1{font-size:clamp(44px,12vw,72px);letter-spacing:-2px}
+}
+@media(hover:none){
+  .skill-card:hover,.project-diagram:hover img{transform:none}
+  .contact-cta:hover>span{transform:none}
+}
