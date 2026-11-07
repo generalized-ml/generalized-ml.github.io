@@ -234,3 +234,43 @@ body>footer{display:flex;justify-content:space-between;gap:20px;padding-block:35
 .intro-scroll::after{content:'';position:absolute;left:8px;top:calc(50% - 8px);width:3px;height:6px;border-radius:2px;background:var(--text);animation:scroll-wheel 1.6s ease-in-out infinite}
 @keyframes scroll-wheel{0%{transform:translateY(0);opacity:0}30%{opacity:1}100%{transform:translateY(10px);opacity:0}}
 @media(prefers-reduced-motion:reduce){.intro-scroll::after{animation:none;opacity:1}}
+
+/* Increase opening-section typography by 20%. */
+#about-title{font-size:clamp(38.4px,5.04vw,69.6px)}
+.about-columns{font-size:21.6px}
+.about .hero-quote p{font-size:21.6px}
+.about .hero-quote footer{font-size:10.8px}
+.about-portrait figcaption{font-size:9.6px}
+@media(max-width:760px){
+ #about-title{font-size:clamp(33.6px,7.8vw,50.4px)}
+ .about-columns{font-size:19.2px}
+ .about .hero-quote footer{font-size:12px}
+ .about-portrait figcaption{font-size:10.8px}
+}
+
+/* Layered parallax: pin the introduction briefly, then reveal the work. */
+.intro-stage.has-parallax{min-height:calc(135svh - 108px);position:relative;isolation:isolate}
+.intro-stage.has-parallax .about{position:sticky;top:0}
+.intro-stage.has-parallax #about-title,
+.intro-stage.has-parallax .about-copy,
+.intro-stage.has-parallax .about-portrait,
+#projects .project-diagram img{
+ translate:0 var(--depth-y,0px);
+ scale:var(--depth-scale,1);
+}
+.intro-stage.has-parallax .about::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 75% 45%,#ffffff05,transparent 65%)}
+#projects{position:relative;background:var(--bg)}
+@media(max-width:760px){
+ .intro-stage.has-parallax{min-height:auto}
+ .intro-stage.has-parallax .about{position:relative;top:auto}
+}
+@media(prefers-reduced-motion:reduce){
+ .intro-stage.has-parallax{min-height:auto}
+ .intro-stage.has-parallax .about{position:relative}
+ #about-title,.about-copy,.about-portrait,#projects .project-diagram img{translate:none!important;scale:none!important}
+}
+
+/* Cards track scroll position continuously in either direction. */
+#projects .grid{position:relative}
+#projects .card{position:relative;translate:0 var(--depth-y,0px)}
+@media(prefers-reduced-motion:reduce){#projects .card{translate:none!important}}
